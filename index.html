@@ -63,55 +63,460 @@
       </div>
     </nav>
 
-    <!-- 3) Panel principal para RSA (estructura base para programar paso a paso) -->
+    <!-- 3) Panel principal para RSA -->
     <main class="rsa-main" id="rsa-panel">
       <section class="panel-header-card">
-        <div>
-          <h2>Panel Principal RSA</h2>
+        <div class="panel-header-info">
+          <div class="panel-title-row">
+            <h2>Panel Principal RSA</h2>
+            <span class="status-pill" id="rsa-status">Motor listo</span>
+          </div>
           <p class="panel-description">
-            Espacio de trabajo para implementar paso a paso la generación de primos, cálculo de claves pública/privada, cifrado y descifrado.
+            Flujo interactivo para generación de claves, cifrado/descifrado en ASCII extendido (0–255) y trazabilidad matemática paso a paso.
           </p>
         </div>
-        <span class="status-pill" id="rsa-status">Listo para configurar</span>
+        <div class="panel-global-actions">
+          <div class="demo-picker-group">
+            <label for="select-demo-case" class="sr-only">Seleccionar caso de prueba oficial</label>
+            <select id="select-demo-case" class="form-select form-select-sm" title="Caso de prueba oficial del PDF">
+              <option value="caso1" selected>Caso PDF #1: p=17, q=19, e=5 ("HOLA")</option>
+              <option value="caso2">Caso PDF #2: p=19, q=23, e=5 ("RSA")</option>
+            </select>
+            <button type="button" id="btn-load-demo" class="btn btn-accent-soft btn-sm">
+              Cargar Caso de Prueba
+            </button>
+          </div>
+          <button type="button" id="btn-clear-all" class="btn btn-danger-outline btn-sm">
+            Limpiar Todo
+          </button>
+        </div>
       </section>
 
       <div class="rsa-grid">
         <!-- Paso 1: Generación de Claves -->
-        <section class="rsa-card" id="rsa-keygen-section">
+        <section class="rsa-card" id="rsa-keygen-section" aria-labelledby="keygen-heading">
           <div class="card-header">
-            <span class="step-badge">Paso 1</span>
-            <h3>Generación de Claves</h3>
+            <div class="card-header-left">
+              <span class="step-badge">Paso 1</span>
+              <h3 id="keygen-heading">Generación de Claves</h3>
+            </div>
+            <span class="card-subtitle">Primos distintos con <code>n &gt; 255</code></span>
           </div>
+
           <div class="card-body">
-            <p class="placeholder-text">
-              Aquí configuraremos la selección de números primos <code>p</code> y <code>q</code>, el cálculo de <code>n = p · q</code>, la función totiente <code>φ(n)</code>, el exponente público <code>e</code> y el inverso modular <code>d</code>.
-            </p>
+            <!-- Controles de autogeneración y sugerencia -->
+            <div class="keygen-toolbar">
+              <div class="range-control">
+                <label for="prime-range" class="field-label-inline">Rango de primos:</label>
+                <select id="prime-range" class="form-select form-select-sm">
+                  <option value="pequenos" selected>Pequeños (17–97)</option>
+                  <option value="medianos">Medianos (101–499)</option>
+                </select>
+              </div>
+              <div class="toolbar-btn-group">
+                <button type="button" id="btn-autogen-primes" class="btn btn-secondary btn-sm">
+                  Autogenerar Primos
+                </button>
+                <button type="button" id="btn-suggest-e" class="btn btn-secondary btn-sm">
+                  Sugerir e
+                </button>
+              </div>
+            </div>
+
+            <!-- Entradas manuales p, q, e -->
+            <div class="keygen-inputs-grid">
+              <div class="form-field">
+                <div class="label-row">
+                  <label for="input-p">Primo <code>p</code></label>
+                  <span class="field-badge badge-neutral" id="badge-p-status">Sin validar</span>
+                </div>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  id="input-p"
+                  class="form-input"
+                  placeholder="Ej. 17"
+                  autocomplete="off"
+                >
+              </div>
+
+              <div class="form-field">
+                <div class="label-row">
+                  <label for="input-q">Primo <code>q</code></label>
+                  <span class="field-badge badge-neutral" id="badge-q-status">Sin validar</span>
+                </div>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  id="input-q"
+                  class="form-input"
+                  placeholder="Ej. 19"
+                  autocomplete="off"
+                >
+              </div>
+
+              <div class="form-field">
+                <div class="label-row">
+                  <label for="input-e">Exponente <code>e</code></label>
+                  <span class="field-badge badge-neutral" id="badge-e-status">Sin validar</span>
+                </div>
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  id="input-e"
+                  class="form-input"
+                  placeholder="Ej. 5"
+                  autocomplete="off"
+                >
+              </div>
+            </div>
+
+            <div class="keygen-submit-row">
+              <button type="button" id="btn-generate-keys" class="btn btn-primary">
+                Generar Claves
+              </button>
+              <span class="helper-hint">
+                Condición: <code>1 &lt; e &lt; φ(n)</code> y <code>mcd(e, φ(n)) = 1</code>
+              </span>
+            </div>
+
+            <!-- Alerta roja de validación matemática -->
+            <div id="keygen-alert" class="alert-box alert-error" role="alert" hidden>
+              <div class="alert-header">
+                <span class="alert-icon" aria-hidden="true">&#9888;</span>
+                <strong class="alert-title">Parámetros inválidos para RSA</strong>
+              </div>
+              <p id="keygen-alert-message" class="alert-message"></p>
+              <div id="keygen-suggestions" class="alert-suggestions" hidden></div>
+            </div>
+
+            <!-- Tarjetas visuales de resultados -->
+            <div class="key-metrics-grid" aria-live="polite">
+              <article class="metric-card">
+                <span class="metric-label">Módulo <code>n = p · q</code></span>
+                <strong class="metric-value" id="val-n">—</strong>
+                <span class="metric-detail" id="detail-n">Esperando primos válidos</span>
+              </article>
+
+              <article class="metric-card">
+                <span class="metric-label">Totiente <code>φ(n) = (p-1)(q-1)</code></span>
+                <strong class="metric-value" id="val-phi">—</strong>
+                <span class="metric-detail" id="detail-phi">Esperando primos válidos</span>
+              </article>
+
+              <article class="metric-card metric-card-public">
+                <span class="metric-label">Clave Pública <code>(n, e)</code></span>
+                <strong class="metric-value metric-value-mono" id="val-public-key">—</strong>
+                <span class="metric-detail" id="detail-public-key">Cifrado: C = M^e mod n</span>
+              </article>
+
+              <article class="metric-card metric-card-private">
+                <span class="metric-label">Clave Privada <code>(n, d)</code></span>
+                <strong class="metric-value metric-value-mono" id="val-private-key">—</strong>
+                <span class="metric-detail" id="detail-private-key">Descifrado: M' = C^d mod n</span>
+              </article>
+            </div>
           </div>
         </section>
 
         <!-- Paso 2: Cifrado y Descifrado -->
-        <section class="rsa-card" id="rsa-cipher-section">
+        <section class="rsa-card" id="rsa-cipher-section" aria-labelledby="cipher-heading">
           <div class="card-header">
-            <span class="step-badge">Paso 2</span>
-            <h3>Cifrado y Descifrado</h3>
+            <div class="card-header-left">
+              <span class="step-badge">Paso 2</span>
+              <h3 id="cipher-heading">Cifrado y Descifrado</h3>
+            </div>
+            <span class="card-subtitle">Dominio ASCII extendido (<code>0–255</code>)</span>
           </div>
+
           <div class="card-body">
-            <p class="placeholder-text">
-              Aquí implementaremos la transformación del mensaje, la exponenciación modular rápida <code>c ≡ m^e (mod n)</code> y el descifrado <code>m ≡ c^d (mod n)</code>.
-            </p>
+            <!-- Alerta roja de validación de cifrado/descifrado -->
+            <div id="cipher-alert" class="alert-box alert-error" role="alert" hidden>
+              <div class="alert-header">
+                <span class="alert-icon" aria-hidden="true">&#9888;</span>
+                <strong class="alert-title">Error en Cifrado / Descifrado</strong>
+              </div>
+              <p id="cipher-alert-message" class="alert-message"></p>
+            </div>
+
+            <!-- Bloque de Cifrado -->
+            <div class="cipher-block">
+              <div class="label-row">
+                <label for="input-plaintext">Mensaje original (texto claro)</label>
+                <span class="helper-hint" id="encrypt-key-hint">Clave pública: —</span>
+              </div>
+              <textarea
+                id="input-plaintext"
+                class="form-textarea"
+                rows="2"
+                placeholder="Escribe el mensaje en ASCII extendido (0–255), ej: HOLA o Mate Discreta 2026"
+              ></textarea>
+
+              <div class="cipher-actions-row">
+                <button type="button" id="btn-encrypt" class="btn btn-primary">
+                  Cifrar Mensaje
+                </button>
+                <button type="button" id="btn-send-to-decrypt" class="btn btn-accent-soft btn-sm">
+                  Enviar a Descifrar
+                </button>
+              </div>
+
+              <div class="output-field">
+                <label for="output-ciphertext">Salida cifrada (bloques numéricos <code>C = M^e mod n</code>)</label>
+                <textarea
+                  id="output-ciphertext"
+                  class="form-textarea form-textarea-mono"
+                  rows="2"
+                  readonly
+                  placeholder="Aquí aparecerán los bloques cifrados, ej: 21, 129, 247, 12"
+                ></textarea>
+              </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- Bloque de Descifrado -->
+            <div class="cipher-block">
+              <div class="label-row">
+                <label for="input-ciphertext">Bloques cifrados para descifrar</label>
+                <span class="helper-hint" id="decrypt-key-hint">Clave privada: —</span>
+              </div>
+              <textarea
+                id="input-ciphertext"
+                class="form-textarea form-textarea-mono"
+                rows="2"
+                placeholder="Acepta comas, corchetes o espacios: 21, 129, 247, 12  o  [21, 129, 247, 12]"
+              ></textarea>
+
+              <div class="cipher-actions-row">
+                <button type="button" id="btn-decrypt" class="btn btn-primary">
+                  Descifrar Mensaje
+                </button>
+                <span class="helper-hint">Limpia corchetes, espacios y saltos de línea automáticamente</span>
+              </div>
+
+              <div class="output-field">
+                <span class="output-label">Mensaje descifrado recuperado</span>
+                <div id="output-decrypted" class="decrypted-output" aria-live="polite">—</div>
+                <div id="output-decrypted-ascii" class="decrypted-ascii-meta">Esperando bloques para descifrar</div>
+              </div>
+            </div>
           </div>
         </section>
 
-        <!-- Paso 3: Bitácora / Procedimiento Matemático -->
-        <section class="rsa-card rsa-card-wide" id="rsa-steps-section">
+        <!-- Tabla compacta integrada de transformación -->
+        <section class="rsa-card rsa-card-wide" id="rsa-table-section" aria-labelledby="table-heading">
           <div class="card-header">
-            <span class="step-badge">Paso 3</span>
-            <h3>Procedimiento Paso a Paso</h3>
+            <div class="card-header-left">
+              <span class="step-badge step-badge-secondary">Verificación</span>
+              <h3 id="table-heading">Tabla de Transformación Carácter por Carácter</h3>
+            </div>
+            <span class="status-pill status-idle" id="transformation-summary">Sin operaciones</span>
           </div>
           <div class="card-body">
-            <p class="placeholder-text">
-              En esta sección mostraremos el desglose matemático de cada operación (Algoritmo de Euclides, Euclides Extendido y exponenciación binaria).
-            </p>
+            <div class="table-scroll">
+              <table class="data-table transformation-table">
+                <thead>
+                  <tr>
+                    <th>Carácter</th>
+                    <th>ASCII (M)</th>
+                    <th>Cifrado (C = M<sup>e</sup> mod n)</th>
+                    <th>Descifrado (M' = C<sup>d</sup> mod n)</th>
+                    <th>Carácter Final</th>
+                  </tr>
+                </thead>
+                <tbody id="transformation-tbody">
+                  <tr>
+                    <td colspan="5" class="table-empty">
+                      Cifra o descifra un mensaje para inspeccionar la transformación carácter por carácter.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Paso 3: Procedimiento Paso a Paso con 3 Pestañas -->
+        <section class="rsa-card rsa-card-wide" id="rsa-steps-section" aria-labelledby="steps-heading">
+          <div class="card-header">
+            <div class="card-header-left">
+              <span class="step-badge">Paso 3</span>
+              <h3 id="steps-heading">Procedimiento Paso a Paso</h3>
+            </div>
+            <span class="card-subtitle">Trazabilidad completa desde cero con <code>BigInt</code></span>
+          </div>
+
+          <div class="card-body">
+            <!-- Barra horizontal de 3 pestañas -->
+            <div class="tabs-bar" role="tablist" aria-label="Desglose de algoritmos RSA">
+              <button
+                type="button"
+                id="tab-btn-euclides"
+                class="tab-btn is-active"
+                role="tab"
+                aria-selected="true"
+                aria-controls="tab-panel-euclides"
+                data-tab="euclides"
+              >
+                1. Euclides (mcd)
+              </button>
+              <button
+                type="button"
+                id="tab-btn-extendido"
+                class="tab-btn"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-panel-extendido"
+                data-tab="extendido"
+              >
+                2. Euclides Extendido (d)
+              </button>
+              <button
+                type="button"
+                id="tab-btn-exponenciacion"
+                class="tab-btn"
+                role="tab"
+                aria-selected="false"
+                aria-controls="tab-panel-exponenciacion"
+                data-tab="exponenciacion"
+              >
+                3. Exponenciación Modular
+              </button>
+            </div>
+
+            <!-- Pestaña 1: Algoritmo de Euclides (mcd) -->
+            <div
+              id="tab-panel-euclides"
+              class="tab-panel"
+              role="tabpanel"
+              aria-labelledby="tab-btn-euclides"
+            >
+              <div id="euclides-summary" class="step-summary-box is-idle">
+                Genera o valida claves para ver las divisiones sucesivas de <code>mcd(e, φ(n))</code>.
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Paso</th>
+                      <th>Dividendo (a)</th>
+                      <th>Divisor (b)</th>
+                      <th>Cociente (q)</th>
+                      <th>Residuo (r)</th>
+                      <th>Ecuación (a = b · q + r)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="euclides-tbody">
+                    <tr>
+                      <td colspan="6" class="table-empty">Sin datos del Algoritmo de Euclides.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pestaña 2: Algoritmo Extendido de Euclides (d) -->
+            <div
+              id="tab-panel-extendido"
+              class="tab-panel"
+              role="tabpanel"
+              aria-labelledby="tab-btn-extendido"
+              hidden
+            >
+              <div id="extendido-summary" class="step-summary-box is-idle">
+                Genera claves válidas para ver la identidad de Bézout y la normalización del inverso modular <code>d</code>.
+              </div>
+              <div class="table-scroll">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Paso</th>
+                      <th>División Sucesiva</th>
+                      <th>Cálculo del Coeficiente (t<sub>i</sub>)</th>
+                      <th>Combinación Lineal Parcial</th>
+                    </tr>
+                  </thead>
+                  <tbody id="extendido-tbody">
+                    <tr>
+                      <td colspan="4" class="table-empty">Sin datos de Euclides Extendido.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Pestaña 3: Exponenciación Modular Binaria -->
+            <div
+              id="tab-panel-exponenciacion"
+              class="tab-panel"
+              role="tabpanel"
+              aria-labelledby="tab-btn-exponenciacion"
+              hidden
+            >
+              <div class="exp-selector-bar">
+                <label for="select-exp-block" class="field-label-inline">
+                  Carácter / bloque a inspeccionar:
+                </label>
+                <select id="select-exp-block" class="form-select form-select-sm">
+                  <option value="">Sin bloques cifrados o descifrados</option>
+                </select>
+              </div>
+
+              <div class="exp-subpanels-grid">
+                <div class="exp-subpanel">
+                  <h4 class="exp-subpanel-title">Cifrado Binario (<code>C = M^e mod n</code>)</h4>
+                  <div id="exp-encrypt-meta" class="step-summary-box is-idle">
+                    Cifra un mensaje para ver la exponenciación binaria de cifrado.
+                  </div>
+                  <div class="table-scroll">
+                    <table class="data-table data-table-compact">
+                      <thead>
+                        <tr>
+                          <th>Iter.</th>
+                          <th>2<sup>i</sup></th>
+                          <th>Bit</th>
+                          <th>Base mod n</th>
+                          <th>Acumulado</th>
+                          <th>Cuadrado siguiente</th>
+                        </tr>
+                      </thead>
+                      <tbody id="exp-encrypt-tbody">
+                        <tr>
+                          <td colspan="6" class="table-empty">Sin datos de exponenciación de cifrado.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="exp-subpanel">
+                  <h4 class="exp-subpanel-title">Descifrado Binario (<code>M' = C^d mod n</code>)</h4>
+                  <div id="exp-decrypt-meta" class="step-summary-box is-idle">
+                    Descifra o cifra un mensaje para ver la exponenciación binaria de descifrado.
+                  </div>
+                  <div class="table-scroll">
+                    <table class="data-table data-table-compact">
+                      <thead>
+                        <tr>
+                          <th>Iter.</th>
+                          <th>2<sup>i</sup></th>
+                          <th>Bit</th>
+                          <th>Base mod n</th>
+                          <th>Acumulado</th>
+                          <th>Cuadrado siguiente</th>
+                        </tr>
+                      </thead>
+                      <tbody id="exp-decrypt-tbody">
+                        <tr>
+                          <td colspan="6" class="table-empty">Sin datos de exponenciación de descifrado.</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </div>

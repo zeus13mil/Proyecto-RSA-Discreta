@@ -3,9 +3,9 @@
 > Este archivo es la **memoria compartida entre chats**. Cada chat nuevo lo lee al iniciar y lo actualiza al terminar su fase.
 
 ## 1. Resumen de Estado Actual
-- **Fase actual:** Fase 3 (Lista para iniciar)
-- **Próxima fase a ejecutar:** Fase 3 — Interfaz Interactiva y Paso a Paso (`index.html`, `css/styles.css`, `js/app.js`)
-- **Última fase confirmada por el usuario:** `Fase 2`
+- **Fase actual:** Fase 4 (Lista para iniciar)
+- **Próxima fase a ejecutar:** Fase 4 — Investigación APA y los 5 Casos de Prueba (`plantilla_investigacion.html`, `docs/Investigacion_RSA.pdf`, `temp_capturas/`)
+- **Última fase confirmada por el usuario:** `Fase 3`
 
 ---
 
@@ -48,3 +48,30 @@
     - Autotest #1 (`p=17, q=19, e=5, d=173, n=323`): `"HOLA"` (ASCII `[72, 79, 76, 65]`) $\rightarrow$ cifrado `[21, 129, 247, 12]` $\rightarrow$ descifrado `"HOLA"` (**PASADO**).
     - Autotest #2 (`p=19, q=23, e=5, d=317, n=437`): `"RSA"` (ASCII `[82, 83, 65]`) $\rightarrow$ cifrado `[119, 429, 126]` $\rightarrow$ descifrado `"RSA"` (**PASADO**).
     - Caracteres en español dentro de ASCII extendido (`"Criptografía y Español 2026!"`) se cifran y descifran sin pérdida, mientras que caracteres Unicode $> 255$ (`€`, `—`, emojis) son bloqueados con alerta descriptiva.
+
+### [Fase 3 — Interfaz Interactiva y Paso a Paso (`index.html`, `css/styles.css`, `js/app.js`)]
+- **Estado:** Completada y confirmada por el usuario
+- **Archivos modificados:**
+  - `index.html`:
+    - Barra de acciones globales (`#select-demo-case`, `#btn-load-demo` **"Cargar Caso de Prueba"** y `#btn-clear-all` **"Limpiar Todo"**) y pill de estado `#rsa-status`, preservando íntegros el encabezado formal, los 3 botones de `./docs/*.pdf` y el modal `#doc-modal`.
+    - **Tarjeta 1 (`#rsa-keygen-section`):** Selector de rango `#prime-range` (`Pequeños: 17–97` por defecto y `Medianos: 101–499`), botones **"Autogenerar Primos"**, **"Sugerir e"** y **"Generar Claves"**, inputs `#input-p`, `#input-q`, `#input-e` con badges de estado, alerta roja `#keygen-alert` con chips clicables de sugerencias de $e$, y 4 tarjetas visuales ($n$, $\varphi(n)$, Clave Pública `(n, e)` y Clave Privada `(n, d)`).
+    - **Tarjeta 2 (`#rsa-cipher-section` + `#rsa-table-section`):** Cajas de cifrado y descifrado, botón **"Cifrar Mensaje"**, botón rápido **"Enviar a Descifrar"**, botón **"Descifrar Mensaje"** con limpieza automática de corchetes, espacios extra y saltos de línea, alerta roja `#cipher-alert`, y tabla compacta integrada `Carácter | ASCII (M) | Cifrado (C = M^e mod n) | Descifrado (M' = C^d mod n) | Carácter Final`.
+    - **Tarjeta 3 (`#rsa-steps-section`):** Barra de 3 pestañas horizontales (**1. Euclides (mcd)**, **2. Euclides Extendido (d)** y **3. Exponenciación Modular** con selector `#select-exp-block` de carácter/bloque por defecto en el 1.º).
+  - `css/styles.css`: Estilos responsivos para formularios, badges, alertas rojas, chips de sugerencia, tarjetas métricas, tablas compactas, pestañas horizontales y subpaneles de exponenciación binaria.
+  - `js/app.js`: Integración completa con `window.RSAEngine` (sin modificar `js/rsa.js`), carga inicial del Caso PDF #1 (`p=17, q=19, e=5, "HOLA"`), manejo de estado, renderizado seguro vía DOM y preservación del visor modal PDF.
+- **Hallazgos y Resultados Reales de Pruebas (ejecutadas en Google Chrome `--headless=new` sobre `file:///`):**
+  - **Verificación intermedia 3.1:**
+    - Carga inicial (`Caso PDF #1`): `n=323`, `φ(n)=288`, Pública `(323, 5)`, Privada `(323, 173)`, cero errores en consola y `ejecutarAutotest()` con `2/2` casos en verde.
+    - Entradas inválidas probadas: `p=4` (`"El valor p = 4 no es un número primo..."`), `p=q=17` (`"Los primos p y q deben ser distintos..."`), `p=7, q=11` (`"El módulo n = p · q = 77 es menor o igual a 255..."`), y `e=6` con `φ(n)=288` (`"mcd(6, 288) = 6 ≠ 1..."` + chips `5, 7, 11, 13, 17, 19`). Todas activaron `#keygen-alert` en rojo y limpiaron las métricas.
+    - Botones `Autogenerar Primos` (probado en `pequenos` y `medianos`), `Sugerir e` (rotando `5 → 7`), `Cargar Caso de Prueba` (`Caso PDF #2` -> `n=437, φ=396, (437, 5), (437, 317)`) y `Limpiar Todo` verificados sin errores.
+  - **Verificación intermedia 3.2:**
+    - `"Mate Discreta 2026"` cifrado y descifrado exactamente con `18/18` filas verificadas `M = M'`.
+    - `"Criptografía"` (con tilde `í`) cifrado y descifrado exactamente con `12/12` filas verificadas `M = M'`.
+    - Limpieza automática en descifrado validada con `[21, 129, 247, 12]`, `21   129\n247   12` $\rightarrow$ `"HOLA"` (normalizado a `21, 129, 247, 12`) y `21, 129, 247` $\rightarrow$ `"HOL"`.
+    - Caracteres fuera de ASCII extendido (`"Precio 10 €"` y `"Hola 🚀"`) bloqueados con alerta roja descriptiva en `#cipher-alert`.
+  - **Verificación intermedia 3.3 e integral:**
+    - Pestaña 1 (*Euclides*) muestra divisiones sucesivas (`288 = 5 · 57 + 3 ...`, y ante `e=6` muestra `288 = 6 · 48 + 0` con `mcd = 6 ≠ 1`).
+    - Pestaña 2 (*Euclides Extendido*) muestra identidad de Bézout (`5 · (-115) + 288 · (2) = 1`), normalización de $d = 173$ y verificación `(5 · 173) mod 288 = 1`.
+    - Pestaña 3 (*Exponenciación Modular*) muestra cifrado y descifrado binario bit a bit para el bloque seleccionado (por defecto `#1: 'H'` con `72^5 mod 323 = 21` y `21^173 mod 323 = 72`, cambiando dinámicamente al seleccionar `#2: 'O'`).
+    - Los 3 botones de documentación (`Manual_Usuario_RSA.pdf`, `Investigacion_RSA.pdf`, `Codigo_Fuente_RSA.pdf`) abren y cierran el modal limpiamente (`src="about:blank"` al cerrar).
+    - Carga directa de `index.html` por `file://` verificada con `0` errores de consola.
