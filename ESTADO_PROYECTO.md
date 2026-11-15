@@ -3,9 +3,9 @@
 > Este archivo es la **memoria compartida entre chats**. Cada chat nuevo lo lee al iniciar y lo actualiza al terminar su fase.
 
 ## 1. Resumen de Estado Actual
-- **Fase actual:** Fase 4 (Lista para iniciar)
-- **Próxima fase a ejecutar:** Fase 4 — Investigación APA y los 5 Casos de Prueba (`plantilla_investigacion.html`, `docs/Investigacion_RSA.pdf`, `temp_capturas/`)
-- **Última fase confirmada por el usuario:** `Fase 3`
+- **Fase actual:** Fase 5 (Lista para iniciar)
+- **Próxima fase a ejecutar:** Fase 5 — Documentación final (`Manual_Usuario_RSA.pdf`, `Codigo_Fuente_RSA.pdf`), limpieza de temporales (`temp_capturas/`, `plantilla_investigacion.html`) y auditoría integral
+- **Última fase confirmada por el usuario:** `Fase 4`
 
 ---
 
@@ -75,3 +75,19 @@
     - Pestaña 3 (*Exponenciación Modular*) muestra cifrado y descifrado binario bit a bit para el bloque seleccionado (por defecto `#1: 'H'` con `72^5 mod 323 = 21` y `21^173 mod 323 = 72`, cambiando dinámicamente al seleccionar `#2: 'O'`).
     - Los 3 botones de documentación (`Manual_Usuario_RSA.pdf`, `Investigacion_RSA.pdf`, `Codigo_Fuente_RSA.pdf`) abren y cierran el modal limpiamente (`src="about:blank"` al cerrar).
     - Carga directa de `index.html` por `file://` verificada con `0` errores de consola.
+
+### [Fase 4 — Investigación APA y los 5 Casos de Prueba]
+- **Estado:** Completada y confirmada por el usuario
+- **Archivos creados/modificados:**
+  - `plantilla_investigacion.html`: Plantilla HTML+CSS en formato APA 7.ª edición (tamaño Carta, márgenes `2.54 cm`, `Times New Roman 12 pt`, interlineado doble uniforme, sangría de primera línea `1.27 cm`, numeración de página superior derecha, portada estudiantil con título e información institucional UCR completa, citas `(Autor, Año)` y referencias con sangría francesa).
+  - `docs/Investigacion_RSA.pdf`: PDF final (`127,773` bytes, `6` páginas totales: `1` portada + `4` páginas de cuerpo + `1` página de referencias) exportado mediante Google Chrome `--headless=new` con `--no-pdf-header-footer`, respondiendo las 7 preguntas obligatorias del instructivo y desarrollando los 3 contextos reales (*TLS/HTTPS*, *Firmas y Certificados Digitales X.509*, *SSH y VPN IKE/IPsec*) con énfasis en *Criptografía Híbrida*.
+  - `temp_capturas/caso1.png` a `temp_capturas/caso5.png`: Capturas de pantalla completas de la interfaz real (`index.html` en Google Chrome headless a `1280px` de ancho) ejecutando los 5 casos de prueba nuevos sobre `file:///`.
+- **Hallazgos y Resultados Reales de Pruebas:**
+  - **Verificación intermedia 4.1 (`docs/Investigacion_RSA.pdf`):**
+    - Inspección visual de las 6 páginas confirmó exactamente **4 páginas de cuerpo** (dentro del rango exigido de 2 a 4 páginas sin contar portada ni referencias), citas consistentes con la bibliografía y 8 fuentes reales verificables en APA 7.ª edición (Diffie & Hellman, 1976; Kurose & Ross, 2021; Moriarty et al., 2016 / RFC 8017; NIST, 2023 / FIPS 186-5; Rescorla, 2018 / RFC 8446; Rivest et al., 1978; Stallings, 2017; Ylonen & Lonvick, 2006 / RFC 4253).
+  - **Verificación intermedia 4.2 (5 Casos de Prueba Nuevos, distintos a `"HOLA"` y `"RSA"`):**
+    - **Caso 1 (Palabra corta, primos pequeños):** $p=17, q=23 \rightarrow n=391, \varphi(n)=352, e=3, d=235$. Mensaje `"MATE"`, ASCII `[77, 65, 84, 69]`, cifrado `[236, 143, 339, 69]`, descifrado `[77, 65, 84, 69]` $\rightarrow$ `"MATE"` (`M = M'` `4/4`, `caso1.png`).
+    - **Caso 2 (Mayúsculas, minúsculas y espacios):** $p=19, q=29 \rightarrow n=551, \varphi(n)=504, e=5, d=101$. Mensaje `"Mate Discreta 2026"`, ASCII `[77, 97, 116, 101, 32, 68, 105, 115, 99, 114, 101, 116, 97, 32, 50, 48, 50, 54]`, cifrado `[514, 298, 203, 309, 185, 501, 421, 115, 302, 171, 309, 203, 298, 185, 350, 79, 350, 194]`, descifrado `[77, 97, 116, 101, 32, 68, 105, 115, 99, 114, 101, 116, 97, 32, 50, 48, 50, 54]` $\rightarrow$ `"Mate Discreta 2026"` (`M = M'` `18/18`, `caso2.png`).
+    - **Caso 3 (Números y signos de puntuación):** $p=23, q=31 \rightarrow n=713, \varphi(n)=660, e=7, d=283$. Mensaje `"Clave #123!"`, ASCII `[67, 108, 97, 118, 101, 32, 35, 49, 50, 51, 33]`, cifrado `[470, 271, 109, 25, 188, 280, 16, 71, 100, 638, 221]`, descifrado `[67, 108, 97, 118, 101, 32, 35, 49, 50, 51, 33]` $\rightarrow$ `"Clave #123!"` (`M = M'` `11/11`, `caso3.png`).
+    - **Caso 4 (Español con tilde en ASCII extendido):** $p=29, q=37 \rightarrow n=1073, \varphi(n)=1008, e=5, d=605$. Mensaje `"Criptografía"`, ASCII `[67, 114, 105, 112, 116, 111, 103, 114, 97, 102, 237, 97]`, cifrado `[324, 983, 1030, 223, 609, 703, 458, 983, 8, 706, 283, 8]`, descifrado `[67, 114, 105, 112, 116, 111, 103, 114, 97, 102, 237, 97]` $\rightarrow$ `"Criptografía"` (`M = M'` `12/12`, `caso4.png`).
+    - **Caso 5 (Primos medianos fijos):** $p=101, q=103 \rightarrow n=10403, \varphi(n)=10200, e=7, d=8743$. Mensaje `"Seguridad RSA"`, ASCII `[83, 101, 103, 117, 114, 105, 100, 97, 100, 32, 82, 83, 65]`, cifrado `[10355, 6464, 6592, 3716, 3176, 5072, 6362, 8361, 6362, 2564, 6642, 10355, 623]`, descifrado `[83, 101, 103, 117, 114, 105, 100, 97, 100, 32, 82, 83, 65]` $\rightarrow$ `"Seguridad RSA"` (`M = M'` `13/13`, `caso5.png`).

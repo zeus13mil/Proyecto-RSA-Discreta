@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>El criptosistema RSA en la seguridad digital cotidiana — Investigación APA 7.ª edición</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 2.54cm;
+      @top-right {
+        content: counter(page);
+        font-family: "Times New Roman", Times, serif;
+        font-size: 12pt;
+        color: #111111;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      color: #111111;
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 2;
+    }
+
+    /* Portada APA 7.ª edición para estudiantes */
+    .cover-page {
+      page-break-after: always;
+      text-align: center;
+      padding-top: 3.5cm;
+    }
+
+    .cover-title {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 0 0 24pt 0;
+      line-height: 2;
+    }
+
+    .cover-meta p {
+      margin: 0;
+      text-indent: 0;
+      text-align: center;
+      line-height: 2;
+    }
+
+    /* Encabezados APA 7.ª edición */
+    h1.paper-title {
+      font-size: 12pt;
+      font-weight: bold;
+      text-align: center;
+      margin: 0 0 0 0;
+      line-height: 2;
+    }
+
+    h2.apa-l1 {
+      font-size: 12pt;
+      font-weight: bold;
+      text-align: center;
+      margin: 0;
+      line-height: 2;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    h3.apa-l2 {
+      font-size: 12pt;
+      font-weight: bold;
+      text-align: left;
+      margin: 0;
+      line-height: 2;
+      page-break-after: avoid;
+      break-after: avoid;
+    }
+
+    /* Párrafos APA 7.ª edición: alineados a la izquierda, sangría de 1.27 cm (0.5 in) */
+    p.apa-body {
+      margin: 0;
+      text-align: left;
+      text-indent: 1.27cm;
+      line-height: 2;
+      orphans: 3;
+      widows: 3;
+    }
+
+    /* Página de Referencias */
+    .references-section {
+      page-break-before: always;
+      break-before: page;
+    }
+
+    p.apa-ref {
+      margin: 0;
+      padding-left: 1.27cm;
+      text-indent: -1.27cm;
+      text-align: left;
+      line-height: 2;
+      overflow-wrap: break-word;
+    }
+
+    @media screen {
+      body {
+        max-width: 21.59cm;
+        margin: 1.5cm auto;
+        padding: 2.54cm;
+        border: 1px solid #d4d4d8;
+        box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+      }
+      .cover-page {
+        min-height: 22cm;
+        border-bottom: 2px dashed #cbd5e1;
+        margin-bottom: 2cm;
+      }
+      .references-section {
+        border-top: 2px dashed #cbd5e1;
+        margin-top: 2cm;
+        padding-top: 1.5cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PORTADA (Página 1) -->
+  <section class="cover-page" aria-label="Portada APA">
+    <h1 class="cover-title">
+      El criptosistema RSA en la seguridad digital cotidiana: de la aritmética modular a la protección de datos en Internet
+    </h1>
+    <div class="cover-meta">
+      <p>Josué Ariel Alfaro Zelaya</p>
+      <p>Carné: C4C206</p>
+      <p>Informática Empresarial, Universidad de Costa Rica</p>
+      <p>IF-0005: Matemáticas Discretas</p>
+      <p>Profesora: Verónica López Mora</p>
+      <p>Proyecto Académico — Criptosistema Asimétrico RSA</p>
+      <p>20 de noviembre de 2026</p>
+    </div>
+  </section>
+
+  <!-- CUERPO DE LA INVESTIGACIÓN (4 páginas de contenido) -->
+  <main>
+    <h1 class="paper-title">
+      El criptosistema RSA en la seguridad digital cotidiana: de la aritmética modular a la protección de datos en Internet
+    </h1>
+
+    <p class="apa-body">
+      El crecimiento de las comunicaciones digitales, el comercio electrónico y la computación en la nube ha convertido la protección de datos en un requisito indispensable. Antes del surgimiento de la criptografía asimétrica en los años setenta, los sistemas de cifrado dependían exclusivamente de métodos simétricos, donde emisor y receptor debían compartir previamente una misma clave secreta (Stallings, 2017). La criptografía de clave pública nació para resolver el problema fundamental de distribuir claves de forma segura a través de canales abiertos e inseguros, sin exigir un encuentro previo ni un medio físico confidencial (Diffie &amp; Hellman, 1976). Asimismo, resolvió la escalabilidad en redes abiertas —evitando administrar un número cuadrático de secretos por pares— y habilitó mecanismos matemáticos de autenticación y no repudio mediante firmas digitales (Kurose &amp; Ross, 2021).
+    </p>
+
+    <h2 class="apa-l1">Papel de RSA dentro de los Sistemas Criptográficos</h2>
+    <p class="apa-body">
+      Dentro de este paradigma, el algoritmo RSA —propuesto por Rivest, Shamir y Adleman (1978)— cumple un papel fundacional como el primer criptosistema práctico capaz de ofrecer tanto confidencialidad como autenticación digital a partir de un par de claves matemáticamente vinculadas: una clave pública (<em>n</em>, <em>e</em>) y una clave privada (<em>n</em>, <em>d</em>). Su diseño aprovecha una asimetría computacional estudiada en teoría de números: mientras calcular potencias modulares y hallar inversos multiplicativos con el algoritmo extendido de Euclides resulta eficiente cuando se conocen los factores primos <em>p</em> y <em>q</em>, factorizar un módulo <em>n</em> = <em>p</em> &middot; <em>q</em> suficientemente grande para deducir &#966;(<em>n</em>) y la clave privada <em>d</em> es computacionalmente intratable con los recursos clásicos actuales (Rivest et al., 1978; Stallings, 2017). Por esta razón, RSA ha actuado durante décadas como piedra angular de la confianza en Internet para encapsular claves de sesión y verificar identidades digitales (National Institute of Standards and Technology [NIST], 2023).
+    </p>
+
+    <h2 class="apa-l1">Sistemas, Protocolos y Aplicaciones que Emplean RSA</h2>
+    <p class="apa-body">
+      A lo largo de su historia, RSA se ha integrado en una amplia variedad de estándares y aplicaciones cotidianas. Entre ellos destacan los protocolos de transporte seguro en la web como TLS y HTTPS (Rescorla, 2018), el acceso remoto autenticado mediante SSH (Ylonen &amp; Lonvick, 2006), los túneles de redes privadas virtuales basados en IPsec e IKE, la infraestructura de clave pública (PKI) con certificados X.509 emitidos por autoridades certificadoras, el cifrado de correo electrónico mediante S/MIME y OpenPGP, así como sistemas de firma electrónica gubernamental, banca en línea, tarjetas bancarias con chip EMV y verificación criptográfica de actualizaciones de software (Kurose &amp; Ross, 2021; Stallings, 2017).
+    </p>
+
+    <h2 class="apa-l1">Contextos Reales de Aplicación de RSA</h2>
+
+    <h3 class="apa-l2">Comunicaciones Seguras en Internet: Protocolos TLS y HTTPS</h3>
+    <p class="apa-body">
+      En las comunicaciones web bajo HTTPS, lo que se desea proteger es la confidencialidad e integridad de los datos intercambiados entre el navegador y el servidor —como contraseñas, historiales médicos o datos bancarios— frente a interceptores en redes públicas. La criptografía de clave pública cumple aquí la función de autenticar la identidad legítima del servidor y permitir el establecimiento seguro de los parámetros iniciales de sesión sin secretos compartidos previos (Kurose &amp; Ross, 2021). En particular, RSA se relaciona con esta aplicación mediante el certificado digital del sitio web, que contiene la clave pública del servidor y suele estar respaldado por firmas RSA (por ejemplo, con el esquema probabilístico RSA-PSS en TLS 1.3), además de haberse empleado históricamente en el transporte cifrado de la clave premaster en versiones previas como TLS 1.2 (Moriarty et al., 2016; Rescorla, 2018). Para el usuario cotidiano, este mecanismo es vital porque garantiza que el ícono de candado del navegador corresponda realmente a la entidad esperada y evita el robo de credenciales en redes inalámbricas abiertas.
+    </p>
+
+    <h3 class="apa-l2">Firmas Digitales y Certificados Digitales</h3>
+    <p class="apa-body">
+      En el ámbito de los documentos electrónicos, trámites estatales y distribución de aplicaciones, lo que se busca proteger es la autenticidad del emisor, la integridad del contenido frente a alteraciones y el no repudio legal o técnico del origen del mensaje (NIST, 2023). La criptografía de clave pública desempeña en este escenario el papel inverso al cifrado: el emisor utiliza su clave privada para generar una firma verificable públicamente por cualquier destinatario mediante la clave pública contenida en un certificado digital X.509. En su relación con RSA, la firma digital consiste en aplicar la operación modular privada sobre el resumen criptográfico del documento o certificado, lo cual permite validar cadenas de confianza desde las autoridades certificadoras raíz hasta el usuario o dispositivo final (Moriarty et al., 2016; Stallings, 2017). Para la persona usuaria, esto resulta determinante porque impide la suplantación de identidad en facturas electrónicas, contratos digitales o instaladores de programas descargados de Internet.
+    </p>
+
+    <h3 class="apa-l2">Intercambio y Protección de Claves en SSH y VPN</h3>
+    <p class="apa-body">
+      Al administrar servidores remotos mediante SSH o conectarse a redes corporativas mediante una VPN, lo que se desea proteger es tanto el acceso administrativo contra intrusos como todo el tráfico interno de la organización que transita por Internet. La criptografía de clave pública cumple aquí la doble función de autenticar a los servidores y clientes (por ejemplo, mediante pares de claves SSH almacenados en el equipo del usuario) y resguardar la negociación de claves efímeras de sesión (Stallings, 2017; Ylonen &amp; Lonvick, 2006). RSA participa directamente en el formato de claves de host y de usuario (<em>ssh-rsa</em> o RSA con SHA-256/SHA-512) y en la autenticación de pares dentro del protocolo IKE de IPsec para establecer túneles VPN confiables. Para el usuario final y los equipos técnicos, su importancia radica en evitar ataques de intermediario, eliminar la dependencia de contraseñas débiles y asegurar el teletrabajo sobre redes domésticas o públicas.
+    </p>
+
+    <h2 class="apa-l1">Limitaciones del Cifrado Directo con RSA y Criptografía Híbrida</h2>
+    <p class="apa-body">
+      Pese a su versatilidad, RSA no debe interpretarse como un método diseñado para cifrar directamente archivos completos, videos o mensajes extensos. Desde el punto de vista matemático, cada bloque numérico <em>M</em> está restringido al dominio 0 &le; <em>M</em> &lt; <em>n</em>, y operar con exponentes y módulos de 2048 o 4096 bits implica multiplicaciones modulares computacionalmente costosas, miles de veces más lentas que los cifrados simétricos modernos acelerados por hardware como AES (Kurose &amp; Ross, 2021; Stallings, 2017). Además, aplicar la fórmula algebraica pura sin relleno aleatorio ("RSA de libro de texto") resulta vulnerable por su determinismo y maleabilidad, por lo que las especificaciones actuales exigen esquemas de relleno como OAEP para cifrado y PSS para firma (Moriarty et al., 2016). Por ello, los sistemas reales recurren a la <em>criptografía híbrida</em>: en confidencialidad, un algoritmo simétrico rápido (como AES-GCM o ChaCha20) cifra el archivo completo con una clave de sesión aleatoria y de un solo uso, mientras RSA protege únicamente esa clave simétrica corta; en autenticación, una función hash criptográfica (como SHA-256) comprime el documento en una huella de tamaño fijo sobre la cual RSA aplica la firma digital (NIST, 2023; Rescorla, 2018).
+    </p>
+
+    <h2 class="apa-l1">Reflexión Final</h2>
+    <p class="apa-body">
+      Estos contextos evidencian una relación directa entre la aritmética modular estudiada en Matemática Discreta y la infraestructura que sostiene la confianza digital. Conceptos como las congruencias módulo <em>n</em>, las clases residuales, los números primos, el máximo común divisor con el algoritmo de Euclides, los coeficientes de Bézout del algoritmo extendido para hallar el inverso modular <em>d</em> y la exponenciación binaria constituyen exactamente el motor matemático de RSA (Rivest et al., 1978). Aunque en clase trabajamos con primos pequeños y codificación ASCII carácter por carácter para transparentar cada cálculo, los sistemas industriales de 2048 bits conservan intacta la misma lógica modular, transformando propiedades elementales de los enteros en privacidad e integridad cotidianas.
+    </p>
+  </main>
+
+  <!-- REFERENCIAS (Página separada en APA 7.ª ed.) -->
+  <section class="references-section" aria-label="Referencias bibliográficas">
+    <h2 class="apa-l1" style="margin-top: 0;">Referencias</h2>
+
+    <p class="apa-ref">
+      Diffie, W., &amp; Hellman, M. E. (1976). New directions in cryptography. <em>IEEE Transactions on Information Theory</em>, <em>22</em>(6), 644–654. https://doi.org/10.1109/TIT.1976.1055638
+    </p>
+
+    <p class="apa-ref">
+      Kurose, J. F., &amp; Ross, K. W. (2021). <em>Computer networking: A top-down approach</em> (8th ed.). Pearson.
+    </p>
+
+    <p class="apa-ref">
+      Moriarty, K., Kaliski, B., Jonsson, J., &amp; Rusch, A. (2016). <em>PKCS #1: RSA cryptography specifications version 2.2</em> (RFC 8017). Internet Engineering Task Force. https://doi.org/10.17487/RFC8017
+    </p>
+
+    <p class="apa-ref">
+      National Institute of Standards and Technology. (2023). <em>Digital signature standard (DSS)</em> (FIPS PUB 186-5). U.S. Department of Commerce. https://doi.org/10.6028/NIST.FIPS.186-5
+    </p>
+
+    <p class="apa-ref">
+      Rescorla, E. (2018). <em>The Transport Layer Security (TLS) protocol version 1.3</em> (RFC 8446). Internet Engineering Task Force. https://doi.org/10.17487/RFC8446
+    </p>
+
+    <p class="apa-ref">
+      Rivest, R. L., Shamir, A., &amp; Adleman, L. (1978). A method for obtaining digital signatures and public-key cryptosystems. <em>Communications of the ACM</em>, <em>21</em>(2), 120–126. https://doi.org/10.1145/359340.359342
+    </p>
+
+    <p class="apa-ref">
+      Stallings, W. (2017). <em>Cryptography and network security: Principles and practice</em> (7th ed.). Pearson.
+    </p>
+
+    <p class="apa-ref">
+      Ylonen, T., &amp; Lonvick, C. (2006). <em>The Secure Shell (SSH) transport layer protocol</em> (RFC 4253). Internet Engineering Task Force. https://doi.org/10.17487/RFC4253
+    </p>
+  </section>
+
+</body>
+</html>
