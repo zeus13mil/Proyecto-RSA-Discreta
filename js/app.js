@@ -36,7 +36,7 @@
       }
       modal.hidden = true;
       document.body.classList.remove("modal-open");
-      docIframe.src = "";
+      docIframe.src = "about:blank";
       modalExternalLink.href = "#";
       if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
         lastFocusedElement.focus();
