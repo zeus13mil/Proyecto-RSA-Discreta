@@ -109,8 +109,15 @@ body.modal-open {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  font-size: 0.92rem;
+  gap: 12px 22px;
+  font-size: 0.9rem;
+}
+
+.meta-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .members-label {
