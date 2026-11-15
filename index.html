@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecto RSA — Matemática Discreta</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- 1) Encabezado formal de presentación -->
+    <header class="academic-header">
+      <div class="header-top">
+        <span class="course-badge">Matemática Discreta</span>
+        <span class="date-badge">Noviembre de 2026</span>
+      </div>
+      <h1 class="project-title">Criptosistema Asimétrico RSA</h1>
+      <p class="project-subtitle">
+        Aplicación interactiva para la generación de claves, cifrado y descifrado mediante aritmética modular.
+      </p>
+      <div class="members-bar">
+        <span class="members-label">Integrantes:</span>
+        <ul class="members-list">
+          <li>Josué Alfaro</li>
+          <li>Integrante 2</li>
+          <li>Integrante 3</li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- 2) Barra de documentos locales (Modal + iframe) -->
+    <nav class="docs-toolbar" aria-label="Documentación del proyecto">
+      <div class="docs-toolbar-info">
+        <span class="toolbar-title">Documentación del Proyecto</span>
+        <span class="toolbar-hint">Visualización local en ventana modal</span>
+      </div>
+      <div class="docs-buttons">
+        <button
+          type="button"
+          class="btn btn-doc"
+          data-doc-src="docs/Manual_Usuario_RSA.pdf"
+          data-doc-title="Manual de Usuario — RSA"
+        >
+          <span class="btn-icon" aria-hidden="true">&#128214;</span>
+          Manual de Usuario
+        </button>
+        <button
+          type="button"
+          class="btn btn-doc"
+          data-doc-src="docs/Investigacion_RSA.pdf"
+          data-doc-title="Investigación Teórica — RSA"
+        >
+          <span class="btn-icon" aria-hidden="true">&#128269;</span>
+          Investigación RSA
+        </button>
+        <button
+          type="button"
+          class="btn btn-doc"
+          data-doc-src="docs/Codigo_Fuente_RSA.pdf"
+          data-doc-title="Código Fuente — RSA"
+        >
+          <span class="btn-icon" aria-hidden="true">&#128187;</span>
+          Código Fuente
+        </button>
+      </div>
+    </nav>
+
+    <!-- 3) Panel principal para RSA (estructura base para programar paso a paso) -->
+    <main class="rsa-main" id="rsa-panel">
+      <section class="panel-header-card">
+        <div>
+          <h2>Panel Principal RSA</h2>
+          <p class="panel-description">
+            Espacio de trabajo para implementar paso a paso la generación de primos, cálculo de claves pública/privada, cifrado y descifrado.
+          </p>
+        </div>
+        <span class="status-pill" id="rsa-status">Listo para configurar</span>
+      </section>
+
+      <div class="rsa-grid">
+        <!-- Paso 1: Generación de Claves -->
+        <section class="rsa-card" id="rsa-keygen-section">
+          <div class="card-header">
+            <span class="step-badge">Paso 1</span>
+            <h3>Generación de Claves</h3>
+          </div>
+          <div class="card-body">
+            <p class="placeholder-text">
+              Aquí configuraremos la selección de números primos <code>p</code> y <code>q</code>, el cálculo de <code>n = p · q</code>, la función totiente <code>φ(n)</code>, el exponente público <code>e</code> y el inverso modular <code>d</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- Paso 2: Cifrado y Descifrado -->
+        <section class="rsa-card" id="rsa-cipher-section">
+          <div class="card-header">
+            <span class="step-badge">Paso 2</span>
+            <h3>Cifrado y Descifrado</h3>
+          </div>
+          <div class="card-body">
+            <p class="placeholder-text">
+              Aquí implementaremos la transformación del mensaje, la exponenciación modular rápida <code>c ≡ m^e (mod n)</code> y el descifrado <code>m ≡ c^d (mod n)</code>.
+            </p>
+          </div>
+        </section>
+
+        <!-- Paso 3: Bitácora / Procedimiento Matemático -->
+        <section class="rsa-card rsa-card-wide" id="rsa-steps-section">
+          <div class="card-header">
+            <span class="step-badge">Paso 3</span>
+            <h3>Procedimiento Paso a Paso</h3>
+          </div>
+          <div class="card-body">
+            <p class="placeholder-text">
+              En esta sección mostraremos el desglose matemático de cada operación (Algoritmo de Euclides, Euclides Extendido y exponenciación binaria).
+            </p>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <span>Proyecto Académico — Matemática Discreta</span>
+      <span>Aplicación 100% estática (HTML5 · CSS3 · JavaScript)</span>
+    </footer>
+  </div>
+
+  <!-- Modal para visualizar documentos PDF locales -->
+  <div
+    class="modal-backdrop"
+    id="doc-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modal-title"
+    hidden
+  >
+    <div class="modal-window">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Documento</h2>
+        <div class="modal-actions">
+          <a
+            id="modal-external-link"
+            class="btn btn-secondary btn-sm"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Abrir aparte
+          </a>
+          <button
+            type="button"
+            class="btn btn-close"
+            id="modal-close-btn"
+            aria-label="Cerrar ventana modal"
+          >
+            &times;
+          </button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <iframe
+          id="doc-iframe"
+          class="doc-iframe"
+          title="Visor de documento PDF"
+          src=""
+        ></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts clásicos para compatibilidad total con file:// -->
+  <script src="js/rsa.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
