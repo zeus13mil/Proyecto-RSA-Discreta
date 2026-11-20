@@ -1091,125 +1091,6 @@
     };
   }
 
-  /**
-   * Paso 2.3: Ejecuta los 2 casos oficiales de autoprueba del PDF del proyecto:
-   * - Caso 1: p=17, q=19, e=5 -> n=323, φ(n)=288, d=173 | "HOLA" -> [21, 129, 247, 12] -> "HOLA"
-   * - Caso 2: p=19, q=23, e=5 -> n=437, φ(n)=396, d=317 | "RSA"  -> [119, 429, 126]   -> "RSA"
-   *
-   * Imprime resultados en verde en la consola y devuelve el resumen estructurado.
-   *
-   * @param {boolean} [silencioso=false] Si es true, omite la salida por console.log.
-   * @returns {{exito: boolean, total: number, pasados: number, resultados: Array<object>}}
-   */
-  function ejecutarAutotest(silencioso) {
-    const definicionCasos = [
-      {
-        id: 1,
-        nombre: "Caso PDF #1 (HOLA)",
-        p: 17,
-        q: 19,
-        e: 5,
-        nEsperado: 323,
-        phiEsperado: 288,
-        dEsperado: 173,
-        mensaje: "HOLA",
-        asciiEsperado: [72, 79, 76, 65],
-        cifradoEsperado: [21, 129, 247, 12]
-      },
-      {
-        id: 2,
-        nombre: "Caso PDF #2 (RSA)",
-        p: 19,
-        q: 23,
-        e: 5,
-        nEsperado: 437,
-        phiEsperado: 396,
-        dEsperado: 317,
-        mensaje: "RSA",
-        asciiEsperado: [82, 83, 65],
-        cifradoEsperado: [119, 429, 126]
-      }
-    ];
-
-    const resultados = [];
-    let pasados = 0;
-
-    for (let i = 0; i < definicionCasos.length; i += 1) {
-      const tc = definicionCasos[i];
-      const claves = generarClaves(tc.p, tc.q, tc.e);
-      const cifrado = cifrarMensaje(tc.mensaje, tc.e, claves.n);
-      const descifrado = descifrarMensaje(cifrado.bloques, claves.d, claves.n);
-
-      const clavesOk =
-        claves.valido &&
-        claves.n === tc.nEsperado &&
-        claves.phi === tc.phiEsperado &&
-        claves.d === tc.dEsperado;
-
-      const asciiOk =
-        cifrado.valido &&
-        JSON.stringify(cifrado.ascii) === JSON.stringify(tc.asciiEsperado);
-
-      const cifradoOk =
-        cifrado.valido &&
-        JSON.stringify(cifrado.bloques) === JSON.stringify(tc.cifradoEsperado);
-
-      const descifradoOk =
-        descifrado.valido &&
-        descifrado.mensajeDescifrado === tc.mensaje &&
-        JSON.stringify(descifrado.bloquesDescifrados) === JSON.stringify(tc.asciiEsperado);
-
-      const exitoCaso = Boolean(clavesOk && asciiOk && cifradoOk && descifradoOk);
-      if (exitoCaso) {
-        pasados += 1;
-      }
-
-      resultados.push({
-        id: tc.id,
-        nombre: tc.nombre,
-        exito: exitoCaso,
-        parametros: { p: tc.p, q: tc.q, n: claves.n, phi: claves.phi, e: claves.e, d: claves.d },
-        mensajeOriginal: tc.mensaje,
-        ascii: cifrado.ascii,
-        bloquesCifrados: cifrado.bloques,
-        bloquesDescifrados: descifrado.bloquesDescifrados,
-        mensajeDescifrado: descifrado.mensajeDescifrado
-      });
-    }
-
-    const todoOk = pasados === definicionCasos.length;
-
-    if (!silencioso && typeof console !== "undefined" && typeof console.log === "function") {
-      console.log(
-        "%c[window.RSAEngine v1.0.0] Motor matemático RSA (BigInt) cargado correctamente.",
-        "color: #0284c7; font-weight: bold;"
-      );
-
-      for (let i = 0; i < resultados.length; i += 1) {
-        const r = resultados[i];
-        const estilo = r.exito
-          ? "color: #16a34a; font-weight: bold;"
-          : "color: #dc2626; font-weight: bold;";
-        const icono = r.exito ? "✔ [AUTOTEST EN VERDE]" : "✘ [AUTOTEST FALLIDO]";
-
-        console.log(
-          "%c" + icono + " " + r.nombre +
-            ": (p=" + r.parametros.p + ", q=" + r.parametros.q + ", e=" + r.parametros.e +
-            ") -> n=" + r.parametros.n + ", φ(n)=" + r.parametros.phi + ", d=" + r.parametros.d +
-            " | \"" + r.mensajeOriginal + "\" -> [" + r.bloquesCifrados.join(", ") + "] -> \"" + r.mensajeDescifrado + "\"",
-          estilo
-        );
-      }
-    }
-
-    return {
-      exito: todoOk,
-      total: definicionCasos.length,
-      pasados: pasados,
-      resultados: resultados
-    };
-  }
-
   const RSAEngine = {
     version: "1.0.0",
 
@@ -1232,14 +1113,8 @@
     potenciaModular: potenciaModular,
     parsearBloquesCifrados: parsearBloquesCifrados,
     cifrarMensaje: cifrarMensaje,
-    descifrarMensaje: descifrarMensaje,
-    ejecutarAutotest: ejecutarAutotest
+    descifrarMensaje: descifrarMensaje
   };
 
   global.RSAEngine = RSAEngine;
-
-  // Ejecutar autotest automáticamente al cargar en el navegador para verificación inmediata en Consola (F12)
-  if (typeof window !== "undefined" && RSAEngine.isSupported()) {
-    RSAEngine.ejecutarAutotest(false);
-  }
 })(typeof window !== "undefined" ? window : globalThis);
