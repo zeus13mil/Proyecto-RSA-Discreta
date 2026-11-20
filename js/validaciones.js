@@ -1,6 +1,12 @@
 (function (global) {
   "use strict";
 
+  // =========================================================================
+  // [2] CAPA DE COMPROBACIONES Y PARSEO DE ENTRADAS (RSAValidaciones)
+  // =========================================================================
+
+  // [2.1] Enlace con el motor matemático y utilidades de parseo
+  // [2.1.1] obtenerEngine()
   /**
    * Obtiene la referencia al motor matemático RSAEngine.
    *
@@ -13,6 +19,7 @@
     return global.RSAEngine;
   }
 
+  // [2.1.2] esEnteroTexto(str)
   /**
    * Verifica si una cadena representa un entero válido (con signo opcional).
    *
@@ -26,6 +33,7 @@
     return /^[+-]?\d+$/.test(str.trim());
   }
 
+  // [2.1.3] aBigInt(valor, nombre)
   /**
    * Convierte un valor (BigInt, Number entero o String numérico) a BigInt.
    * Lanza un Error descriptivo si el valor no representa un número entero válido.
@@ -63,6 +71,7 @@
     throw new Error("El parámetro " + etiqueta + " es inválido o está vacío.");
   }
 
+  // [2.1.4] parsearBloquesCifrados(entrada)
   /**
    * Limpia y convierte una entrada de bloques cifrados (Array o cadena con corchetes,
    * comas, espacios o saltos de línea) en una lista de BigInt.
@@ -165,6 +174,8 @@
     };
   }
 
+  // [2.2] Validaciones de estado para la interfaz (badges y sugerencias)
+  // [2.2.1] validarEstadoCamposClave(pEntrada, qEntrada, eEntrada, resultadoClaves)
   /**
    * Evalúa el estado individual de los campos p, q y e para actualizar los badges de la UI.
    *
@@ -247,6 +258,7 @@
     };
   }
 
+  // [2.2.2] validarPrimosParaSugerencia(p, q)
   /**
    * Verifica si un par (p, q) es válido para calcular φ(n) y sugerir exponentes e.
    *
@@ -279,6 +291,7 @@
     };
   }
 
+  // [2.2.3] esExponenteValidoParaPhi(e, phi)
   /**
    * Comprueba si un exponente e es entero, cumple 1 < e < φ(n) y es coprimo con φ(n).
    *
@@ -297,6 +310,8 @@
     }
   }
 
+  // [2.3] Flujos validados de alto nivel (delegación al motor matemático)
+  // [2.3.1] validarYGenerarClaves(p, q, e)
   /**
    * Valida todos los parámetros matemáticos de RSA (p, q, e) y delega el cálculo
    * de claves y tablas paso a paso a RSAEngine.generarClaves.
@@ -475,6 +490,7 @@
     };
   }
 
+  // [2.3.2] validarYCifrarMensaje(texto, e, n)
   /**
    * Valida mensaje, dominio ASCII (0–255), condición M < n y parámetros (e, n)
    * antes de invocar RSAEngine.cifrarMensaje.
@@ -572,6 +588,7 @@
     };
   }
 
+  // [2.3.3] validarYDescifrarMensaje(bloques, d, n)
   /**
    * Parsea y valida los bloques cifrados (0 ≤ C < n), parámetros (d, n) y el dominio
    * ASCII extendido (0–255) del resultado descifrado por RSAEngine.descifrarMensaje.
@@ -669,6 +686,7 @@
     };
   }
 
+  // [2.4] Exportación pública (window.RSAValidaciones)
   const RSAValidaciones = {
     version: "1.0.0",
     esEnteroTexto: esEnteroTexto,

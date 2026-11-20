@@ -1,6 +1,12 @@
 (function (global) {
   "use strict";
 
+  // =========================================================================
+  // [1] NÚCLEO MATEMÁTICO RSA (BigInt)
+  // =========================================================================
+
+  // [1.1] Contexto y normalización numérica exacta
+  // [1.1.1] toBigInt(valor)
   /**
    * Convierte un entero (BigInt o Number entero) a BigInt para aritmética modular exacta.
    *
@@ -17,6 +23,8 @@
     throw new TypeError("Se esperaba un número entero (BigInt o Number entero).");
   }
 
+  // [1.2] Teoría de números y generación de primos
+  // [1.2.1] esPrimo(num)
   /**
    * Verifica si un número entero es primo mediante división por tentativa
    * utilizando BigInt nativo (evaluando divisores impares hasta √n).
@@ -51,6 +59,7 @@
     return true;
   }
 
+  // [1.2.2] listarPrimosEnRango(min, max)
   /**
    * Obtiene todos los números primos dentro de un intervalo cerrado [min, max].
    *
@@ -72,6 +81,7 @@
     return primos;
   }
 
+  // [1.2.3] generarPrimos(rango)
   /**
    * Genera aleatoriamente dos números primos distintos (p ≠ q)
    * dentro del rango solicitado, garantizando que n = p · q > 255.
@@ -123,6 +133,8 @@
     };
   }
 
+  // [1.3] Algoritmos de Euclides e inverso modular
+  // [1.3.1] euclidesMCD(a, b)
   /**
    * Algoritmo clásico de Euclides para calcular el Máximo Común Divisor mcd(a, b),
    * registrando cada división sucesiva (dividendo = divisor · cociente + residuo) en `pasos`.
@@ -185,6 +197,7 @@
     };
   }
 
+  // [1.3.2] euclidesExtendido(e, phi)
   /**
    * Algoritmo Extendido de Euclides para resolver la identidad de Bézout
    * e · x + φ(n) · y = mcd(e, φ(n)) y obtener el inverso multiplicativo modular
@@ -316,6 +329,7 @@
     };
   }
 
+  // [1.3.3] sugerirExponenteE(phi, eActual)
   /**
    * Sugiere valores válidos para el exponente público `e` tales que
    * 1 < e < φ(n) y mcd(e, φ(n)) = 1.
@@ -391,6 +405,7 @@
     };
   }
 
+  // [1.3.4] generarClaves(p, q, e)
   /**
    * Cálculo matemático directo de las claves RSA a partir de (p, q, e):
    * n = p · q, φ(n) = (p - 1)(q - 1), mcd(φ(n), e) e inverso modular d ≡ e⁻¹ (mod φ(n)).
@@ -442,6 +457,8 @@
     };
   }
 
+  // [1.4] Exponenciación modular y operaciones de cifrado / descifrado
+  // [1.4.1] potenciaModular(base, exponente, modulo)
   /**
    * Exponenciación modular rápida (exponenciación binaria derecha-a-izquierda)
    * para calcular (base^exponente) mod modulo paso a paso usando BigInt.
@@ -582,6 +599,7 @@
     };
   }
 
+  // [1.4.2] cifrarMensaje(texto, e, n)
   /**
    * Cifra un mensaje de texto carácter por carácter mediante C = M^e mod n
    * usando exponenciación modular rápida.
@@ -641,6 +659,7 @@
     };
   }
 
+  // [1.4.3] descifrarMensaje(bloques, d, n)
   /**
    * Descifra una lista de bloques numéricos usando M' = C^d mod n
    * y reconstruye el mensaje carácter por carácter.
@@ -703,6 +722,8 @@
     };
   }
 
+  // [1.5] Interfaz pública del motor matemático (RSAEngine)
+  // [1.5.1] RSAEngine.isSupported() y exportación global window.RSAEngine
   const RSAEngine = {
     version: "1.0.0",
 

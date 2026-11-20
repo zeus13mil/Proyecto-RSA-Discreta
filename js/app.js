@@ -5,6 +5,12 @@
     const engine = window.RSAEngine;
     const validaciones = window.RSAValidaciones;
 
+    // =========================================================================
+    // [3] CONTROLADOR DE INTERFAZ WEB
+    // =========================================================================
+
+    // [3.1] Visor modal de documentación PDF
+    // [3.1.1] openDocModal(src, title), closeDocModal() y eventos del modal
     // -------------------------------------------------------------------------
     // 1. Referencias del Visor Modal de Documentación (Fase 1 - Intacto)
     // -------------------------------------------------------------------------
@@ -64,6 +70,8 @@
       }
     });
 
+    // [3.2] Referencias DOM, casos de prueba y estado de aplicación
+    // [3.2.1] Referencias de paneles (Pasos 1, 2 y 3)
     // -------------------------------------------------------------------------
     // 2. Referencias del Panel Principal RSA y Tarjeta 1 (Paso 3.1)
     // -------------------------------------------------------------------------
@@ -140,6 +148,7 @@
     const expDecryptMeta = document.getElementById("exp-decrypt-meta");
     const expDecryptTbody = document.getElementById("exp-decrypt-tbody");
 
+    // [3.2.2] DEMO_CASES, estado global (state) y verificación de soporte BigInt
     const DEMO_CASES = {
       caso1: { p: "17", q: "19", e: "5", mensaje: "HOLA" },
       caso2: { p: "19", q: "23", e: "5", mensaje: "RSA" }
@@ -159,6 +168,8 @@
       return;
     }
 
+    // [3.3] Helpers de estado visual, alertas y métricas (Paso 1)
+    // [3.3.1] setStatusPill(texto, tipo), setFieldBadge(...) y actualizarBadgesIndividuales(...)
     function setStatusPill(texto, tipo) {
       rsaStatus.textContent = texto;
       rsaStatus.className = "status-pill";
@@ -196,6 +207,7 @@
       setFieldBadge(badgeE, inputE, estados.e.texto, estados.e.estado);
     }
 
+    // [3.3.2] mostrarAlertaClaves(...), ocultarAlertaClaves(), métricas y hints de claves
     function mostrarAlertaClaves(mensaje, sugerencias) {
       keygenAlertMessage.textContent = mensaje;
       keygenSuggestions.innerHTML = "";
@@ -267,6 +279,8 @@
       }
     }
 
+    // [3.4] Renderizado de transformación y tablas paso a paso (Pasos 2 y 3)
+    // [3.4.1] Alertas de cifrado, formatearCaracterVisible(...) y crearCeldaCaracter(...)
     function mostrarAlertaCifrado(mensaje) {
       cipherAlertMessage.textContent = mensaje;
       cipherAlert.hidden = false;
@@ -317,6 +331,7 @@
       return td;
     }
 
+    // [3.4.2] limpiarTablaTransformacion(...), renderizarTablaTransformacion(...) y limpiarResultadosCifradoParcial()
     function limpiarTablaTransformacion(mensajeVacio) {
       transformationTbody.innerHTML = "";
       const tr = document.createElement("tr");
@@ -386,6 +401,7 @@
       actualizarSelectorYExponenciacion();
     }
 
+    // [3.4.3] activarPestana(...), crearFilaVacia(...), renderizarPasoEuclides(...) y renderizarPasoExtendido(...)
     // -------------------------------------------------------------------------
     // Funciones de renderizado para Paso 3.3 (Pestañas Paso a Paso)
     // -------------------------------------------------------------------------
@@ -537,6 +553,7 @@
       });
     }
 
+    // [3.4.4] renderizarTablaExponenciacion(...), renderizarExponenciacionPorIndice(...) y actualizarSelectorYExponenciacion(...)
     function renderizarTablaExponenciacion(metaEl, tbodyEl, expInfo, tipoOperacion, mensajeVacio) {
       tbodyEl.innerHTML = "";
 
@@ -685,6 +702,8 @@
       }
     });
 
+    // [3.5] Orquestación de acciones y eventos de usuario
+    // [3.5.1] asegurarClavesValidas(), ejecutarCifrado() y ejecutarDescifrado()
     function asegurarClavesValidas() {
       if (state.claves && state.claves.valido) {
         return state.claves;
@@ -845,6 +864,7 @@
       return descifrado;
     }
 
+    // [3.5.2] procesarGeneracionClaves(esEdicionEnVivo) y listeners de botones e inputs
     function procesarGeneracionClaves(esEdicionEnVivo) {
       const pTxt = inputP.value.trim();
       const qTxt = inputQ.value.trim();
@@ -954,6 +974,7 @@
       });
     });
 
+    // [3.5.3] cargarCasoPrueba(idCaso), limpiarTodo() e inicialización por defecto
     function cargarCasoPrueba(idCaso) {
       const caso = DEMO_CASES[idCaso] || DEMO_CASES.caso1;
       primeRangeSelect.value = "pequenos";
