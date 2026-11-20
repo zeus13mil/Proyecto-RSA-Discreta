@@ -3,6 +3,7 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     const engine = window.RSAEngine;
+    const validaciones = window.RSAValidaciones;
 
     // -------------------------------------------------------------------------
     // 1. Referencias del Visor Modal de Documentación (Fase 1 - Intacto)
@@ -152,7 +153,7 @@
       tabActiva: "euclides"
     };
 
-    if (!engine || !engine.isSupported()) {
+    if (!engine || !validaciones || !engine.isSupported()) {
       rsaStatus.textContent = "Navegador sin soporte BigInt";
       rsaStatus.className = "status-pill status-error";
       return;
@@ -183,57 +184,16 @@
       }
     }
 
-    function esEnteroTexto(str) {
-      return /^[+-]?\d+$/.test(str.trim());
-    }
-
     function actualizarBadgesIndividuales(resultadoClaves) {
-      const pTxt = inputP.value.trim();
-      const qTxt = inputQ.value.trim();
-      const eTxt = inputE.value.trim();
-
-      let pValido = false;
-      let qValido = false;
-      let pBig = null;
-      let qBig = null;
-
-      if (pTxt === "") {
-        setFieldBadge(badgeP, inputP, "Sin ingresar", "neutral");
-      } else if (!esEnteroTexto(pTxt) || !engine.esPrimo(pTxt)) {
-        setFieldBadge(badgeP, inputP, "No es primo", "error");
-      } else {
-        pValido = true;
-        pBig = engine.aBigInt(pTxt, "p");
-        setFieldBadge(badgeP, inputP, "Primo válido", "ok");
-      }
-
-      if (qTxt === "") {
-        setFieldBadge(badgeQ, inputQ, "Sin ingresar", "neutral");
-      } else if (!esEnteroTexto(qTxt) || !engine.esPrimo(qTxt)) {
-        setFieldBadge(badgeQ, inputQ, "No es primo", "error");
-      } else {
-        qBig = engine.aBigInt(qTxt, "q");
-        if (pValido && pBig === qBig) {
-          setFieldBadge(badgeQ, inputQ, "Igual a p", "error");
-        } else if (pValido && (pBig * qBig) <= 255n) {
-          setFieldBadge(badgeQ, inputQ, "n ≤ 255", "error");
-        } else {
-          qValido = true;
-          setFieldBadge(badgeQ, inputQ, "Primo válido", "ok");
-        }
-      }
-
-      if (eTxt === "") {
-        setFieldBadge(badgeE, inputE, "Sin ingresar", "neutral");
-      } else if (!esEnteroTexto(eTxt)) {
-        setFieldBadge(badgeE, inputE, "Inválido", "error");
-      } else if (resultadoClaves && resultadoClaves.valido) {
-        setFieldBadge(badgeE, inputE, "Coprimo válido", "ok");
-      } else if (pValido && qValido && resultadoClaves && !resultadoClaves.valido) {
-        setFieldBadge(badgeE, inputE, "No válido", "error");
-      } else {
-        setFieldBadge(badgeE, inputE, "Pendiente", "neutral");
-      }
+      const estados = validaciones.validarEstadoCamposClave(
+        inputP.value,
+        inputQ.value,
+        inputE.value,
+        resultadoClaves
+      );
+      setFieldBadge(badgeP, inputP, estados.p.texto, estados.p.estado);
+      setFieldBadge(badgeQ, inputQ, estados.q.texto, estados.q.estado);
+      setFieldBadge(badgeE, inputE, estados.e.texto, estados.e.estado);
     }
 
     function mostrarAlertaClaves(mensaje, sugerencias) {
@@ -744,7 +704,7 @@
       }
 
       const texto = inputPlaintext.value;
-      const cifrado = engine.cifrarMensaje(texto, claves.eBig, claves.nBig);
+      const cifrado = validaciones.validarYCifrarMensaje(texto, claves.eBig, claves.nBig);
 
       if (!cifrado.valido) {
         state.ultimoCifrado = null;
@@ -760,7 +720,7 @@
       state.ultimoCifrado = cifrado;
       outputCiphertext.value = cifrado.textoCifrado;
 
-      const verifDescifrado = engine.descifrarMensaje(cifrado.bloquesBig, claves.dBig, claves.nBig);
+      const verifDescifrado = validaciones.validarYDescifrarMensaje(cifrado.bloquesBig, claves.dBig, claves.nBig);
       if (verifDescifrado.valido) {
         state.ultimoDescifrado = verifDescifrado;
         let coincidencias = 0;
@@ -802,7 +762,7 @@
       }
 
       const entradaBloques = inputCiphertext.value;
-      const descifrado = engine.descifrarMensaje(entradaBloques, claves.dBig, claves.nBig);
+      const descifrado = validaciones.validarYDescifrarMensaje(entradaBloques, claves.dBig, claves.nBig);
 
       if (!descifrado.valido) {
         state.ultimoDescifrado = null;
@@ -904,7 +864,7 @@
         return null;
       }
 
-      const res = engine.generarClaves(pTxt, qTxt, eTxt);
+      const res = validaciones.validarYGenerarClaves(pTxt, qTxt, eTxt);
       actualizarBadgesIndividuales(res);
 
       if (!res.valido) {
@@ -955,16 +915,8 @@
 
       const phiBig = (generados.pBig - 1n) * (generados.qBig - 1n);
       const eActual = inputE.value.trim();
-      let eValido = false;
 
-      if (esEnteroTexto(eActual)) {
-        const eBig = engine.aBigInt(eActual, "e");
-        if (eBig > 1n && eBig < phiBig && engine.euclidesMCD(eBig, phiBig).esCoprimo) {
-          eValido = true;
-        }
-      }
-
-      if (!eValido) {
+      if (!validaciones.esExponenteValidoParaPhi(eActual, phiBig)) {
         const sug = engine.sugerirExponenteE(phiBig);
         inputE.value = sug.sugeridoBig.toString();
       }
@@ -973,24 +925,15 @@
     });
 
     btnSuggestE.addEventListener("click", function () {
-      const pTxt = inputP.value.trim();
-      const qTxt = inputQ.value.trim();
-
-      if (!esEnteroTexto(pTxt) || !esEnteroTexto(qTxt) || !engine.esPrimo(pTxt) || !engine.esPrimo(qTxt)) {
+      const infoPrimos = validaciones.validarPrimosParaSugerencia(inputP.value, inputQ.value);
+      if (!infoPrimos.valido) {
         procesarGeneracionClaves(false);
         return;
       }
 
-      const pBig = engine.aBigInt(pTxt, "p");
-      const qBig = engine.aBigInt(qTxt, "q");
-
-      if (pBig === qBig || (pBig * qBig) <= 255n) {
-        procesarGeneracionClaves(false);
-        return;
-      }
-
-      const phiBig = (pBig - 1n) * (qBig - 1n);
-      const sug = engine.sugerirExponenteE(phiBig, inputE.value.trim());
+      const eTxt = inputE.value.trim();
+      const eActualBig = validaciones.esEnteroTexto(eTxt) ? validaciones.aBigInt(eTxt, "e") : null;
+      const sug = engine.sugerirExponenteE(infoPrimos.phiBig, eActualBig);
       inputE.value = sug.sugeridoBig.toString();
       procesarGeneracionClaves(false);
     });

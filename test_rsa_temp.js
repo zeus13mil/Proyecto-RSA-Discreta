@@ -331,6 +331,70 @@ registrarPrueba("Badges y helpers UI en RSAValidaciones: validarEstadoCamposClav
   assert.strictEqual(RSAValidaciones.esExponenteValidoParaPhi("6", 288n), false);
 });
 
+registrarPrueba("Integración Fase 3: orden de scripts en index.html y contratos en js/app.js", () => {
+  const htmlPath = path.join(__dirname, "index.html");
+  const appPath = path.join(__dirname, "js", "app.js");
+
+  const codigoHtml = fs.readFileSync(htmlPath, "utf8");
+  const codigoApp = fs.readFileSync(appPath, "utf8");
+
+  const idxRsa = codigoHtml.indexOf('<script src="js/rsa.js"></script>');
+  const idxVal = codigoHtml.indexOf('<script src="js/validaciones.js"></script>');
+  const idxApp = codigoHtml.indexOf('<script src="js/app.js"></script>');
+
+  assert.ok(idxRsa !== -1, "Falta <script src=\"js/rsa.js\"></script> en index.html");
+  assert.ok(idxVal !== -1, "Falta <script src=\"js/validaciones.js\"></script> en index.html");
+  assert.ok(idxApp !== -1, "Falta <script src=\"js/app.js\"></script> en index.html");
+  assert.ok(
+    idxRsa < idxVal && idxVal < idxApp,
+    "El orden de carga en index.html debe ser estrictamente: js/rsa.js -> js/validaciones.js -> js/app.js"
+  );
+
+  // Verificar que todas las llamadas engine.<metodo> en js/app.js existen en RSAEngine
+  const regexEngine = /\bengine\.([a-zA-Z0-9_]+)\b/g;
+  let matchEngine;
+  const metodosEngineUsados = new Set();
+  while ((matchEngine = regexEngine.exec(codigoApp)) !== null) {
+    const metodo = matchEngine[1];
+    metodosEngineUsados.add(metodo);
+    assert.strictEqual(
+      typeof RSAEngine[metodo],
+      "function",
+      "js/app.js invoca engine." + metodo + " pero no existe en RSAEngine"
+    );
+  }
+
+  // Verificar que todas las llamadas validaciones.<metodo> en js/app.js existen en RSAValidaciones
+  const regexVal = /\bvalidaciones\.([a-zA-Z0-9_]+)\b/g;
+  let matchVal;
+  const metodosValUsados = new Set();
+  while ((matchVal = regexVal.exec(codigoApp)) !== null) {
+    const metodo = matchVal[1];
+    metodosValUsados.add(metodo);
+    assert.strictEqual(
+      typeof RSAValidaciones[metodo],
+      "function",
+      "js/app.js invoca validaciones." + metodo + " pero no existe en RSAValidaciones"
+    );
+  }
+
+  // Confirmar que js/app.js delega las validaciones a RSAValidaciones y los cálculos a RSAEngine
+  assert.ok(metodosValUsados.has("validarEstadoCamposClave"));
+  assert.ok(metodosValUsados.has("validarYGenerarClaves"));
+  assert.ok(metodosValUsados.has("validarYCifrarMensaje"));
+  assert.ok(metodosValUsados.has("validarYDescifrarMensaje"));
+  assert.ok(metodosValUsados.has("validarPrimosParaSugerencia"));
+  assert.ok(metodosValUsados.has("esExponenteValidoParaPhi"));
+
+  assert.ok(metodosEngineUsados.has("isSupported"));
+  assert.ok(metodosEngineUsados.has("generarPrimos"));
+  assert.ok(metodosEngineUsados.has("sugerirExponenteE"));
+  assert.ok(metodosEngineUsados.has("potenciaModular"));
+
+  assert.strictEqual(codigoApp.includes("engine.aBigInt"), false);
+  assert.strictEqual(codigoApp.includes("function esEnteroTexto"), false);
+});
+
 let pasadas = 0;
 let fallidas = 0;
 
