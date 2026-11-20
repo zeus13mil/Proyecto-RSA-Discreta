@@ -3,19 +3,20 @@
 > Este archivo es la **memoria compartida entre chats**. Cada chat nuevo lo lee al iniciar y lo actualiza al terminar su fase (hasta la Fase 4; en la Fase 5 se elimina junto con los demás temporales).
 
 ## 1. Resumen de Estado Actual
-- **Fase actual:** **Fase 1** completada y confirmada por el usuario
-- **Próxima fase a ejecutar:** **Fase 2** — División de `js/rsa.js` (Matemática) y `js/validaciones.js` (Comprobaciones)
-- **Última fase confirmada por el usuario:** **Fase 1**
+- **Fase actual:** **Fase 2** completada y confirmada por el usuario
+- **Próxima fase a ejecutar:** **Fase 3** — Conexión de `index.html` y `js/app.js` (Paridad Visual 100%)
+- **Última fase confirmada por el usuario:** **Fase 2**
 
 ---
 
 ## 2. Arquitectura Actual del Proyecto
 - **Carpeta raíz:** `c:\Users\Josue\OneDrive\Documentos\ucr-JosueAlfaro-LAP\ucr-JosueAlfaro-LAP 2026\segundo semestre del 2026\mate discretas\Proyecto_RSA_Discreta`
 - **Archivos de aplicación actuales:**
-  - `index.html` (594 líneas, carga actualmente `js/rsa.js` y `js/app.js`)
+  - `index.html` (594 líneas, carga actualmente `js/rsa.js` y `js/app.js`; pendiente insertar `js/validaciones.js` en Fase 3)
   - `css/styles.css`
-  - `js/rsa.js` (1,245 líneas; actualmente mezcla núcleo matemático, parseo/validaciones y `ejecutarAutotest`)
-  - `js/app.js` (1,059 líneas; maneja UI, `DEMO_CASES`, tablas paso a paso y validaciones locales como `esEnteroTexto`)
+  - `js/rsa.js` (730 líneas; núcleo 100% matemático con `BigInt` y tablas `pasos`)
+  - `js/validaciones.js` (686 líneas; parseo, comprobaciones, badges y mensajes de error exactos en `window.RSAValidaciones`)
+  - `js/app.js` (1,059 líneas; maneja UI, `DEMO_CASES`, tablas paso a paso; pendiente conectar con `RSAValidaciones` en Fase 3)
 - **Documentación en `docs/`:**
   - `docs/Investigacion_RSA.pdf` *(intocable)*
   - `docs/Manual_Usuario_RSA.pdf` *(intocable)*
@@ -46,3 +47,13 @@
   - `ejecutarAutotest` no tenía ninguna referencia en `index.html` ni en `js/app.js`.
   - Al cargar `js/rsa.js` en `test_rsa_temp.js` mediante `vm.runInContext`, los arreglos devueltos pertenecen al contexto de la VM, por lo que `assert.deepStrictEqual` requiere normalizarlos con `Array.from(...)`.
 - **Resultados reales (`node test_rsa_temp.js`):** `9/9 pruebas pasaron, 0 fallaron` (incluyendo `Caso PDF #1 (HOLA)`, `Caso PDF #2 (RSA)`, `isSupported`, `esPrimo`, `euclidesMCD`, `euclidesExtendido`, `potenciaModular`, contratos de error en `generarClaves`, `cifrarMensaje` y `descifrarMensaje`).
+
+### [Fase 2 — División de `js/rsa.js` (Matemática) y `js/validaciones.js` (Comprobaciones)]
+- **Estado:** Completado y confirmado por el usuario
+- **Archivos creados:** `js/validaciones.js` (`window.RSAValidaciones`)
+- **Archivos modificados:** `js/rsa.js`, `test_rsa_temp.js`
+- **Hallazgos:**
+  - `js/rsa.js` quedó reducido a 730 líneas exclusivamente matemáticas (`toBigInt` interno para `bigint`/`number` entero, `esPrimo`, `listarPrimosEnRango`, `generarPrimos`, `euclidesMCD`, `euclidesExtendido`, `sugerirExponenteE`, `generarClaves`, `potenciaModular`, `cifrarMensaje` y `descifrarMensaje`), preservando intactas todas las estructuras `pasos` y `detalles`.
+  - `js/validaciones.js` centraliza `esEnteroTexto`, `aBigInt`, `parsearBloquesCifrados`, `validarEstadoCamposClave`, `validarPrimosParaSugerencia`, `esExponenteValidoParaPhi`, `validarYGenerarClaves`, `validarYCifrarMensaje` y `validarYDescifrarMensaje`, delegando los criterios y cálculos matemáticos a `window.RSAEngine` y conservando idénticos los textos de error y estados de badges.
+  - En este entorno de agente, `node` no está accesible dentro del sandbox (`Acceso denegado` en `AppData\Local\hermes\node\node.exe` y el *pre-tool hook* bloquea `BypassSandbox: true` para `node`), por lo que la ejecución de `node test_rsa_temp.js` fue verificada directamente por el usuario en su terminal.
+- **Resultados reales (`node test_rsa_temp.js`):** `15/15 pruebas pasaron, 0 fallaron` (validando `RSAEngine`, `RSAValidaciones`, `Caso PDF #1 (HOLA)`, `Caso PDF #2 (RSA)`, separación estricta de `js/rsa.js`, parseos, badges y todos los contratos de error exactos).

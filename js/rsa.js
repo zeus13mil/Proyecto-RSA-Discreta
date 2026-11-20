@@ -2,53 +2,32 @@
   "use strict";
 
   /**
-   * Convierte un valor (BigInt, Number entero o String numérico) a BigInt.
-   * Lanza un Error descriptivo si el valor no representa un número entero válido.
+   * Convierte un entero (BigInt o Number entero) a BigInt para aritmética modular exacta.
    *
-   * @param {bigint|number|string} valor Valor a convertir.
-   * @param {string} [nombre="valor"] Nombre del parámetro para mensajes de error.
+   * @param {bigint|number} valor Valor entero a normalizar.
    * @returns {bigint}
    */
-  function aBigInt(valor, nombre) {
-    const etiqueta = nombre || "valor";
-
-    if (valor && typeof valor === "object" && "sugeridoBig" in valor) {
-      return valor.sugeridoBig;
-    }
-
+  function toBigInt(valor) {
     if (typeof valor === "bigint") {
       return valor;
     }
-
-    if (typeof valor === "number") {
-      if (!Number.isFinite(valor) || !Number.isInteger(valor)) {
-        throw new Error("El parámetro " + etiqueta + " debe ser un número entero válido.");
-      }
+    if (typeof valor === "number" && Number.isInteger(valor)) {
       return BigInt(valor);
     }
-
-    if (typeof valor === "string") {
-      const limpio = valor.trim();
-      if (!/^[+-]?\d+$/.test(limpio)) {
-        throw new Error("El parámetro " + etiqueta + " (\"" + valor + "\") no es un entero válido.");
-      }
-      return BigInt(limpio);
-    }
-
-    throw new Error("El parámetro " + etiqueta + " es inválido o está vacío.");
+    throw new TypeError("Se esperaba un número entero (BigInt o Number entero).");
   }
 
   /**
-   * Paso 2.1: Verifica si un número entero es primo mediante división por tentativa
-   * desde cero utilizando BigInt nativo (evaluando hasta √n).
+   * Verifica si un número entero es primo mediante división por tentativa
+   * utilizando BigInt nativo (evaluando divisores impares hasta √n).
    *
-   * @param {bigint|number|string} num Número a evaluar.
+   * @param {bigint|number} num Número entero a evaluar.
    * @returns {boolean} true si es primo, false en caso contrario.
    */
   function esPrimo(num) {
     let n;
     try {
-      n = aBigInt(num, "num");
+      n = toBigInt(num);
     } catch (_err) {
       return false;
     }
@@ -80,8 +59,8 @@
    * @returns {bigint[]} Lista de números primos como BigInt.
    */
   function listarPrimosEnRango(min, max) {
-    const inicio = aBigInt(min, "min");
-    const fin = aBigInt(max, "max");
+    const inicio = toBigInt(min);
+    const fin = toBigInt(max);
     const primos = [];
 
     for (let candidato = inicio; candidato <= fin; candidato += 1n) {
@@ -94,7 +73,7 @@
   }
 
   /**
-   * Paso 2.1: Genera aleatoriamente dos números primos distintos (p ≠ q)
+   * Genera aleatoriamente dos números primos distintos (p ≠ q)
    * dentro del rango solicitado, garantizando que n = p · q > 255.
    *
    * Rangos soportados:
@@ -145,16 +124,16 @@
   }
 
   /**
-   * Paso 2.2: Algoritmo clásico de Euclides para calcular el Máximo Común Divisor mcd(a, b),
+   * Algoritmo clásico de Euclides para calcular el Máximo Común Divisor mcd(a, b),
    * registrando cada división sucesiva (dividendo = divisor · cociente + residuo) en `pasos`.
    *
-   * @param {bigint|number|string} a Primer número entero.
-   * @param {bigint|number|string} b Segundo número entero.
+   * @param {bigint|number} a Primer número entero.
+   * @param {bigint|number} b Segundo número entero.
    * @returns {{a: number, b: number, aBig: bigint, bBig: bigint, mcd: number, mcdBig: bigint, esCoprimo: boolean, pasos: Array<object>}}
    */
   function euclidesMCD(a, b) {
-    let x = aBigInt(a, "a");
-    let y = aBigInt(b, "b");
+    let x = toBigInt(a);
+    let y = toBigInt(b);
 
     if (x < 0n) x = -x;
     if (y < 0n) y = -y;
@@ -207,17 +186,17 @@
   }
 
   /**
-   * Paso 2.2: Algoritmo Extendido de Euclides para resolver la identidad de Bézout
+   * Algoritmo Extendido de Euclides para resolver la identidad de Bézout
    * e · x + φ(n) · y = mcd(e, φ(n)) y obtener el inverso multiplicativo modular
    * d ≡ e⁻¹ (mod φ(n)), normalizado en el rango positivo 1 < d < φ(n).
    *
-   * @param {bigint|number|string} e Exponente público.
-   * @param {bigint|number|string} phi Función totiente de Euler φ(n).
+   * @param {bigint|number} e Exponente público.
+   * @param {bigint|number} phi Función totiente de Euler φ(n).
    * @returns {object} Resultado con coeficientes de Bézout, d normalizado y tabla de pasos.
    */
   function euclidesExtendido(e, phi) {
-    const eBig = aBigInt(e, "e");
-    const phiBig = aBigInt(phi, "phi");
+    const eBig = toBigInt(e);
+    const phiBig = toBigInt(phi);
 
     if (phiBig <= 1n) {
       throw new Error("El valor de φ(n) debe ser mayor que 1.");
@@ -338,15 +317,15 @@
   }
 
   /**
-   * Paso 2.2: Sugiere valores válidos para el exponente público `e` tales que
+   * Sugiere valores válidos para el exponente público `e` tales que
    * 1 < e < φ(n) y mcd(e, φ(n)) = 1.
    *
-   * @param {bigint|number|string} phi Valor de φ(n) = (p - 1)(q - 1).
-   * @param {bigint|number|string} [eActual] Exponente actual opcional para rotar entre sugerencias.
+   * @param {bigint|number} phi Valor de φ(n) = (p - 1)(q - 1).
+   * @param {bigint|number} [eActual] Exponente actual opcional para rotar entre sugerencias.
    * @returns {{sugerido: number, sugeridoBig: bigint, candidatos: number[], candidatosBig: bigint[], valueOf: function, toString: function}}
    */
   function sugerirExponenteE(phi, eActual) {
-    const phiBig = aBigInt(phi, "phi");
+    const phiBig = toBigInt(phi);
     if (phiBig <= 2n) {
       throw new Error("φ(n) debe ser mayor que 2 para encontrar un exponente público e válido.");
     }
@@ -382,9 +361,9 @@
 
     let elegido = candidatosBig[0];
 
-    if (eActual !== undefined && eActual !== null && String(eActual).trim() !== "") {
+    if (eActual !== undefined && eActual !== null) {
       try {
-        const actualBig = aBigInt(eActual, "eActual");
+        const actualBig = toBigInt(eActual);
         const idx = candidatosBig.indexOf(actualBig);
         if (idx !== -1 && candidatosBig.length > 1) {
           elegido = candidatosBig[(idx + 1) % candidatosBig.length];
@@ -413,161 +392,25 @@
   }
 
   /**
-   * Paso 2.2: Valida todos los parámetros matemáticos de RSA y genera las claves
-   * pública (n, e) y privada (n, d), incluyendo el desglose completo de Euclides y
-   * Euclides Extendido.
+   * Cálculo matemático directo de las claves RSA a partir de (p, q, e):
+   * n = p · q, φ(n) = (p - 1)(q - 1), mcd(φ(n), e) e inverso modular d ≡ e⁻¹ (mod φ(n)).
    *
-   * @param {bigint|number|string} p Primer número primo.
-   * @param {bigint|number|string} q Segundo número primo.
-   * @param {bigint|number|string} e Exponente público.
-   * @returns {object} Objeto con claves, pasos matemáticos o errores descriptivos.
+   * @param {bigint|number} p Primer número primo.
+   * @param {bigint|number} q Segundo número primo.
+   * @param {bigint|number} e Exponente público.
+   * @returns {object} Estructura matemática con n, φ(n), claves pública/privada y tablas de pasos.
    */
   function generarClaves(p, q, e) {
-    const errores = [];
-    let pBig = null;
-    let qBig = null;
-    let eBig = null;
-
-    try {
-      pBig = aBigInt(p, "p");
-    } catch (_err) {
-      errores.push("El parámetro p debe ser un número entero válido.");
-    }
-
-    try {
-      qBig = aBigInt(q, "q");
-    } catch (_err) {
-      errores.push("El parámetro q debe ser un número entero válido.");
-    }
-
-    if (errores.length > 0) {
-      return {
-        valido: false,
-        exito: false,
-        errores: errores,
-        error: errores.join(" "),
-        sugerenciasE: []
-      };
-    }
-
-    const pEsPrimo = esPrimo(pBig);
-    const qEsPrimo = esPrimo(qBig);
-
-    if (!pEsPrimo) {
-      errores.push("El valor p = " + pBig.toString() + " no es un número primo. Ingrese un número primo (ej. 17, 19, 23).");
-    }
-
-    if (!qEsPrimo) {
-      errores.push("El valor q = " + qBig.toString() + " no es un número primo. Ingrese un número primo (ej. 19, 23, 29).");
-    }
-
-    if (pEsPrimo && qEsPrimo && pBig === qBig) {
-      errores.push("Los primos p y q deben ser distintos (p ≠ q). Actualmente ambos valen " + pBig.toString() + ".");
-    }
+    const pBig = toBigInt(p);
+    const qBig = toBigInt(q);
+    const eBig = toBigInt(e);
 
     const nBig = pBig * qBig;
-    if (pEsPrimo && qEsPrimo && pBig !== qBig && nBig <= 255n) {
-      errores.push(
-        "El módulo n = p · q = " + nBig.toString() +
-        " es menor o igual a 255. Se exige n > 255 para poder cifrar todo el alfabeto ASCII extendido (0–255)."
-      );
-    }
-
-    if (errores.length > 0) {
-      return {
-        valido: false,
-        exito: false,
-        errores: errores,
-        error: errores.join(" "),
-        p: Number(pBig),
-        q: Number(qBig),
-        n: Number(nBig),
-        sugerenciasE: []
-      };
-    }
-
     const phiBig = (pBig - 1n) * (qBig - 1n);
-    const infoSugerencias = sugerirExponenteE(phiBig);
-    const listaSugeridosTexto = infoSugerencias.candidatos.slice(0, 6).join(", ");
-
-    try {
-      eBig = aBigInt(e, "e");
-    } catch (_err) {
-      errores.push(
-        "El exponente público e debe ser un número entero válido. Valores sugeridos para φ(n) = " +
-        phiBig.toString() + ": " + listaSugeridosTexto + "."
-      );
-      return {
-        valido: false,
-        exito: false,
-        errores: errores,
-        error: errores.join(" "),
-        p: Number(pBig),
-        q: Number(qBig),
-        n: Number(nBig),
-        phi: Number(phiBig),
-        sugerenciasE: infoSugerencias.candidatos
-      };
-    }
-
-    if (eBig <= 1n || eBig >= phiBig) {
-      errores.push(
-        "El exponente e = " + eBig.toString() +
-        " debe cumplir estrictamente 1 < e < φ(n) (con φ(n) = " + phiBig.toString() +
-        "). Valores válidos sugeridos: " + listaSugeridosTexto + "."
-      );
-    }
-
     const mcdInfo = euclidesMCD(phiBig, eBig > 0n ? eBig : 1n);
-    if (eBig > 1n && eBig < phiBig && !mcdInfo.esCoprimo) {
-      errores.push(
-        "El exponente e = " + eBig.toString() +
-        " no es coprimo con φ(n) = " + phiBig.toString() +
-        " porque mcd(" + eBig.toString() + ", " + phiBig.toString() + ") = " + mcdInfo.mcd.toString() +
-        " ≠ 1. Pruebe con alguno de estos valores válidos para e: " + listaSugeridosTexto + "."
-      );
-    }
-
-    if (errores.length > 0) {
-      return {
-        valido: false,
-        exito: false,
-        errores: errores,
-        error: errores.join(" "),
-        p: Number(pBig),
-        q: Number(qBig),
-        n: Number(nBig),
-        phi: Number(phiBig),
-        e: Number(eBig),
-        euclides: mcdInfo,
-        sugerenciasE: infoSugerencias.candidatos
-      };
-    }
-
     const extInfo = euclidesExtendido(eBig, phiBig);
-    if (!extInfo.inversoExiste || extInfo.dBig === null) {
-      errores.push("No fue posible calcular el inverso modular d para e = " + eBig.toString() + " y φ(n) = " + phiBig.toString() + ".");
-      return {
-        valido: false,
-        exito: false,
-        errores: errores,
-        error: errores.join(" "),
-        p: Number(pBig),
-        q: Number(qBig),
-        n: Number(nBig),
-        phi: Number(phiBig),
-        e: Number(eBig),
-        euclides: mcdInfo,
-        euclidesExtendido: extInfo,
-        sugerenciasE: infoSugerencias.candidatos
-      };
-    }
 
     return {
-      valido: true,
-      exito: true,
-      errores: [],
-      error: null,
       p: Number(pBig),
       q: Number(qBig),
       n: Number(nBig),
@@ -592,27 +435,26 @@
         d: extInfo.d,
         nBig: nBig,
         dBig: extInfo.dBig,
-        texto: "(" + nBig.toString() + ", " + extInfo.dBig.toString() + ")"
+        texto: extInfo.dBig !== null ? "(" + nBig.toString() + ", " + extInfo.dBig.toString() + ")" : null
       },
       euclides: mcdInfo,
-      euclidesExtendido: extInfo,
-      sugerenciasE: infoSugerencias.candidatos
+      euclidesExtendido: extInfo
     };
   }
 
   /**
-   * Paso 2.3: Exponenciación modular rápida (exponenciación binaria derecha-a-izquierda)
+   * Exponenciación modular rápida (exponenciación binaria derecha-a-izquierda)
    * para calcular (base^exponente) mod modulo paso a paso usando BigInt.
    *
-   * @param {bigint|number|string} base Base entera M o C.
-   * @param {bigint|number|string} exponente Exponente entero e o d.
-   * @param {bigint|number|string} modulo Módulo entero n.
+   * @param {bigint|number} base Base entera M o C.
+   * @param {bigint|number} exponente Exponente entero e o d.
+   * @param {bigint|number} modulo Módulo entero n.
    * @returns {object} Resultado final y bitácora detallada de cada bit en `pasos`.
    */
   function potenciaModular(base, exponente, modulo) {
-    const baseBig = aBigInt(base, "base");
-    const expBig = aBigInt(exponente, "exponente");
-    const modBig = aBigInt(modulo, "modulo");
+    const baseBig = toBigInt(base);
+    const expBig = toBigInt(exponente);
+    const modBig = toBigInt(modulo);
 
     if (expBig < 0n) {
       throw new Error("El exponente no puede ser negativo en la exponenciación modular.");
@@ -741,183 +583,17 @@
   }
 
   /**
-   * Limpia y convierte una entrada de bloques cifrados (Array o cadena con corchetes,
-   * comas, espacios o saltos de línea) en una lista de BigInt.
-   *
-   * @param {Array<number|bigint|string>|string} entrada Entrada de bloques cifrados.
-   * @returns {{valido: boolean, bloquesBig: bigint[], bloques: number[], error: string|null}}
-   */
-  function parsearBloquesCifrados(entrada) {
-    if (Array.isArray(entrada)) {
-      if (entrada.length === 0) {
-        return {
-          valido: false,
-          bloquesBig: [],
-          bloques: [],
-          error: "El vector de bloques cifrados no puede estar vacío."
-        };
-      }
-
-      const bloquesBig = [];
-      const bloquesNum = [];
-
-      for (let i = 0; i < entrada.length; i += 1) {
-        try {
-          const val = aBigInt(entrada[i], "bloque[" + i + "]");
-          bloquesBig.push(val);
-          bloquesNum.push(Number(val));
-        } catch (_err) {
-          return {
-            valido: false,
-            bloquesBig: [],
-            bloques: [],
-            error: "El bloque en la posición " + (i + 1) + " (\"" + String(entrada[i]) + "\") no es un número entero válido."
-          };
-        }
-      }
-
-      return {
-        valido: true,
-        bloquesBig: bloquesBig,
-        bloques: bloquesNum,
-        error: null
-      };
-    }
-
-    if (typeof entrada === "string") {
-      const limpia = entrada.replace(/[\[\]()]/g, " ").trim();
-      if (limpia.length === 0) {
-        return {
-          valido: false,
-          bloquesBig: [],
-          bloques: [],
-          error: "Ingrese al menos un bloque numérico cifrado para poder descifrar."
-        };
-      }
-
-      const partes = limpia.split(/[\s,;]+/).filter(function (token) {
-        return token.length > 0;
-      });
-
-      if (partes.length === 0) {
-        return {
-          valido: false,
-          bloquesBig: [],
-          bloques: [],
-          error: "No se encontraron bloques numéricos válidos en la entrada."
-        };
-      }
-
-      const bloquesBig = [];
-      const bloquesNum = [];
-
-      for (let i = 0; i < partes.length; i += 1) {
-        const token = partes[i];
-        if (!/^[+-]?\d+$/.test(token)) {
-          return {
-            valido: false,
-            bloquesBig: [],
-            bloques: [],
-            error: "El valor \"" + token + "\" (posición " + (i + 1) + ") no es un bloque entero válido."
-          };
-        }
-        const b = BigInt(token);
-        bloquesBig.push(b);
-        bloquesNum.push(Number(b));
-      }
-
-      return {
-        valido: true,
-        bloquesBig: bloquesBig,
-        bloques: bloquesNum,
-        error: null
-      };
-    }
-
-    return {
-      valido: false,
-      bloquesBig: [],
-      bloques: [],
-      error: "Formato de entrada no válido para descifrar."
-    };
-  }
-
-  /**
-   * Paso 2.3: Cifra un mensaje de texto carácter por carácter usando el dominio
-   * ASCII extendido (0–255) y la fórmula C = M^e mod n.
-   * Bloquea cualquier carácter con código > 255 o M >= n con un mensaje matemático claro.
+   * Cifra un mensaje de texto carácter por carácter mediante C = M^e mod n
+   * usando exponenciación modular rápida.
    *
    * @param {string} texto Mensaje en texto claro.
-   * @param {bigint|number|string} e Exponente público.
-   * @param {bigint|number|string} n Módulo RSA (n > 255).
+   * @param {bigint|number} e Exponente público.
+   * @param {bigint|number} n Módulo RSA.
    * @returns {object} Resultado con bloques cifrados, códigos ASCII y desglose por carácter.
    */
   function cifrarMensaje(texto, e, n) {
-    if (typeof texto !== "string" || texto.length === 0) {
-      return {
-        valido: false,
-        exito: false,
-        error: "El mensaje a cifrar no puede estar vacío."
-      };
-    }
-
-    let eBig;
-    let nBig;
-
-    try {
-      eBig = aBigInt(e, "e");
-      nBig = aBigInt(n, "n");
-    } catch (err) {
-      return {
-        valido: false,
-        exito: false,
-        error: err.message
-      };
-    }
-
-    if (nBig <= 255n) {
-      return {
-        valido: false,
-        exito: false,
-        error:
-          "El módulo n = " + nBig.toString() +
-          " debe ser estrictamente mayor que 255 (n > 255) para cubrir el dominio ASCII extendido (0–255)."
-      };
-    }
-
-    if (eBig <= 1n) {
-      return {
-        valido: false,
-        exito: false,
-        error: "El exponente público e = " + eBig.toString() + " debe ser mayor que 1."
-      };
-    }
-
-    for (let i = 0; i < texto.length; i += 1) {
-      const ch = texto.charAt(i);
-      const codigo = texto.charCodeAt(i);
-
-      if (codigo < 0 || codigo > 255) {
-        return {
-          valido: false,
-          exito: false,
-          error:
-            "Carácter fuera de dominio detectado: \"" + ch +
-            "\" (posición " + (i + 1) + ", código Unicode " + codigo +
-            " > 255). El criptosistema opera exclusivamente sobre ASCII extendido (0–255)."
-        };
-      }
-
-      if (BigInt(codigo) >= nBig) {
-        return {
-          valido: false,
-          exito: false,
-          error:
-            "El carácter \"" + ch + "\" tiene código ASCII M = " + codigo +
-            " ≥ n (" + nBig.toString() + "). Se viola la condición matemática M < n requerida por RSA."
-        };
-      }
-    }
+    const eBig = toBigInt(e);
+    const nBig = toBigInt(n);
 
     const detalles = [];
     const codigosAscii = [];
@@ -951,9 +627,6 @@
     }
 
     return {
-      valido: true,
-      exito: true,
-      error: null,
       mensajeOriginal: texto,
       ascii: codigosAscii,
       bloques: bloquesCifrados,
@@ -969,89 +642,31 @@
   }
 
   /**
-   * Paso 2.3: Descifra una secuencia de bloques numéricos usando la fórmula
-   * M' = C^d mod n y reconstruye el mensaje en el dominio ASCII extendido (0–255).
+   * Descifra una lista de bloques numéricos usando M' = C^d mod n
+   * y reconstruye el mensaje carácter por carácter.
    *
-   * @param {Array<number|bigint|string>|string} bloques Vector o cadena de bloques cifrados.
-   * @param {bigint|number|string} d Exponente privado (inverso modular de e mod φ(n)).
-   * @param {bigint|number|string} n Módulo RSA (n > 255).
+   * @param {Array<number|bigint>} bloques Arreglo de bloques numéricos cifrados.
+   * @param {bigint|number} d Exponente privado (inverso modular de e mod φ(n)).
+   * @param {bigint|number} n Módulo RSA.
    * @returns {object} Resultado con mensaje descifrado, bloques M' y desglose por bloque.
    */
   function descifrarMensaje(bloques, d, n) {
-    let dBig;
-    let nBig;
-
-    try {
-      dBig = aBigInt(d, "d");
-      nBig = aBigInt(n, "n");
-    } catch (err) {
-      return {
-        valido: false,
-        exito: false,
-        error: err.message
-      };
+    if (!Array.isArray(bloques)) {
+      throw new TypeError("Se esperaba un arreglo de bloques numéricos para descifrar.");
     }
 
-    if (nBig <= 255n) {
-      return {
-        valido: false,
-        exito: false,
-        error:
-          "El módulo n = " + nBig.toString() +
-          " debe ser estrictamente mayor que 255 (n > 255) para cubrir el dominio ASCII extendido (0–255)."
-      };
-    }
+    const dBig = toBigInt(d);
+    const nBig = toBigInt(n);
 
-    if (dBig < 1n) {
-      return {
-        valido: false,
-        exito: false,
-        error: "El exponente privado d = " + dBig.toString() + " debe ser un entero positivo."
-      };
-    }
-
-    const parseo = parsearBloquesCifrados(bloques);
-    if (!parseo.valido) {
-      return {
-        valido: false,
-        exito: false,
-        error: parseo.error
-      };
-    }
-
-    const listaCBig = parseo.bloquesBig;
     const detalles = [];
     const bloquesCifradosNum = [];
     const bloquesDescifradosNum = [];
     const caracteres = [];
 
-    for (let i = 0; i < listaCBig.length; i += 1) {
-      const cBig = listaCBig[i];
-
-      if (cBig < 0n || cBig >= nBig) {
-        return {
-          valido: false,
-          exito: false,
-          error:
-            "El bloque cifrado C = " + cBig.toString() +
-            " (posición " + (i + 1) + ") está fuera del dominio válido 0 ≤ C < n (con n = " + nBig.toString() + ")."
-        };
-      }
-
+    for (let i = 0; i < bloques.length; i += 1) {
+      const cBig = toBigInt(bloques[i]);
       const expMod = potenciaModular(cBig, dBig, nBig);
       const mPrimaBig = expMod.resultadoBig;
-
-      if (mPrimaBig < 0n || mPrimaBig > 255n) {
-        return {
-          valido: false,
-          exito: false,
-          error:
-            "El bloque cifrado C = " + cBig.toString() +
-            " produjo M' = " + mPrimaBig.toString() +
-            " (> 255), fuera del rango ASCII extendido (0–255). Verifique que la clave privada (n, d) corresponda al mensaje cifrado."
-        };
-      }
-
       const codigo = Number(mPrimaBig);
       const ch = String.fromCharCode(codigo);
 
@@ -1076,9 +691,6 @@
     }
 
     return {
-      valido: true,
-      exito: true,
-      error: null,
       bloquesCifrados: bloquesCifradosNum,
       bloquesDescifrados: bloquesDescifradosNum,
       ascii: bloquesDescifradosNum,
@@ -1102,7 +714,6 @@
       return typeof BigInt === "function";
     },
 
-    aBigInt: aBigInt,
     esPrimo: esPrimo,
     listarPrimosEnRango: listarPrimosEnRango,
     generarPrimos: generarPrimos,
@@ -1111,7 +722,6 @@
     sugerirExponenteE: sugerirExponenteE,
     generarClaves: generarClaves,
     potenciaModular: potenciaModular,
-    parsearBloquesCifrados: parsearBloquesCifrados,
     cifrarMensaje: cifrarMensaje,
     descifrarMensaje: descifrarMensaje
   };

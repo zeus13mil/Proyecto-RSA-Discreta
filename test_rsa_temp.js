@@ -5,24 +5,44 @@ const path = require("path");
 const vm = require("vm");
 const assert = require("assert");
 
-function cargarRSAEngine() {
+function cargarModulos() {
   const rsaPath = path.join(__dirname, "js", "rsa.js");
-  const codigo = fs.readFileSync(rsaPath, "utf8");
+  const validacionesPath = path.join(__dirname, "js", "validaciones.js");
+
+  const codigoRsa = fs.readFileSync(rsaPath, "utf8");
+  const codigoValidaciones = fs.readFileSync(validacionesPath, "utf8");
+
   const sandbox = {
     console: console,
-    BigInt: BigInt
+    BigInt: BigInt,
+    Math: Math,
+    Number: Number,
+    String: String,
+    Array: Array,
+    Error: Error,
+    TypeError: TypeError
   };
   sandbox.globalThis = sandbox;
+
   vm.createContext(sandbox);
-  vm.runInContext(codigo, sandbox, { filename: "js/rsa.js" });
+  vm.runInContext(codigoRsa, sandbox, { filename: "js/rsa.js" });
+  vm.runInContext(codigoValidaciones, sandbox, { filename: "js/validaciones.js" });
 
   if (!sandbox.RSAEngine) {
     throw new Error("No se pudo cargar RSAEngine desde js/rsa.js");
   }
-  return sandbox.RSAEngine;
+  if (!sandbox.RSAValidaciones) {
+    throw new Error("No se pudo cargar RSAValidaciones desde js/validaciones.js");
+  }
+
+  return {
+    RSAEngine: sandbox.RSAEngine,
+    RSAValidaciones: sandbox.RSAValidaciones,
+    codigoRsa: codigoRsa
+  };
 }
 
-const RSAEngine = cargarRSAEngine();
+const { RSAEngine, RSAValidaciones, codigoRsa } = cargarModulos();
 
 const pruebas = [];
 function registrarPrueba(nombre, fn) {
@@ -60,32 +80,62 @@ const casosOficialesPDF = [
 ];
 
 for (const tc of casosOficialesPDF) {
-  registrarPrueba("Autotest oficial: " + tc.nombre, () => {
+  registrarPrueba("Matemática pura (RSAEngine): " + tc.nombre, () => {
     const claves = RSAEngine.generarClaves(tc.p, tc.q, tc.e);
+    assert.strictEqual(claves.n, tc.nEsperado);
+    assert.strictEqual(claves.phi, tc.phiEsperado);
+    assert.strictEqual(claves.d, tc.dEsperado);
+    assert.strictEqual(claves.clavePublica.texto, `(${tc.nEsperado}, ${tc.e})`);
+    assert.strictEqual(claves.clavePrivada.texto, `(${tc.nEsperado}, ${tc.dEsperado})`);
+
+    const cifrado = RSAEngine.cifrarMensaje(tc.mensaje, tc.e, claves.n);
+    assert.deepStrictEqual(Array.from(cifrado.ascii), tc.asciiEsperado);
+    assert.deepStrictEqual(Array.from(cifrado.bloques), tc.cifradoEsperado);
+
+    const descifrado = RSAEngine.descifrarMensaje(Array.from(cifrado.bloques), claves.d, claves.n);
+    assert.deepStrictEqual(Array.from(descifrado.bloquesDescifrados), tc.asciiEsperado);
+    assert.strictEqual(descifrado.mensajeDescifrado, tc.mensaje);
+  });
+
+  registrarPrueba("Validaciones + Matemática (RSAValidaciones): " + tc.nombre, () => {
+    const claves = RSAValidaciones.validarYGenerarClaves(String(tc.p), String(tc.q), String(tc.e));
     assert.strictEqual(claves.valido, true);
+    assert.strictEqual(claves.exito, true);
     assert.strictEqual(claves.n, tc.nEsperado);
     assert.strictEqual(claves.phi, tc.phiEsperado);
     assert.strictEqual(claves.d, tc.dEsperado);
 
-    const cifrado = RSAEngine.cifrarMensaje(tc.mensaje, tc.e, claves.n);
+    const cifrado = RSAValidaciones.validarYCifrarMensaje(tc.mensaje, claves.eBig, claves.nBig);
     assert.strictEqual(cifrado.valido, true);
     assert.deepStrictEqual(Array.from(cifrado.ascii), tc.asciiEsperado);
     assert.deepStrictEqual(Array.from(cifrado.bloques), tc.cifradoEsperado);
 
-    const descifrado = RSAEngine.descifrarMensaje(cifrado.bloques, claves.d, claves.n);
+    const descifrado = RSAValidaciones.validarYDescifrarMensaje(cifrado.textoCifrado, claves.dBig, claves.nBig);
     assert.strictEqual(descifrado.valido, true);
     assert.deepStrictEqual(Array.from(descifrado.bloquesDescifrados), tc.asciiEsperado);
     assert.strictEqual(descifrado.mensajeDescifrado, tc.mensaje);
   });
 }
 
-// 2. Pruebas base de contratos matemáticos actuales
+// 2. Separación estricta de js/rsa.js (100% matemático)
+registrarPrueba("Separación estricta: js/rsa.js sin parseo ni autotest ni errores UI", () => {
+  assert.strictEqual("aBigInt" in RSAEngine, false);
+  assert.strictEqual("parsearBloquesCifrados" in RSAEngine, false);
+  assert.strictEqual("ejecutarAutotest" in RSAEngine, false);
+
+  assert.strictEqual(codigoRsa.includes("aBigInt"), false);
+  assert.strictEqual(codigoRsa.includes("parsearBloquesCifrados"), false);
+  assert.strictEqual(codigoRsa.includes("ejecutarAutotest"), false);
+  assert.strictEqual(codigoRsa.includes("const errores = []"), false);
+});
+
+// 3. Pruebas matemáticas puras en RSAEngine
 registrarPrueba("Entorno: isSupported() y versión", () => {
   assert.strictEqual(RSAEngine.isSupported(), true);
   assert.strictEqual(typeof RSAEngine.version, "string");
 });
 
-registrarPrueba("Primalidad: esPrimo(n)", () => {
+registrarPrueba("Primalidad y generación: esPrimo, listarPrimosEnRango, generarPrimos", () => {
   assert.strictEqual(RSAEngine.esPrimo(2), true);
   assert.strictEqual(RSAEngine.esPrimo(17), true);
   assert.strictEqual(RSAEngine.esPrimo(19n), true);
@@ -95,6 +145,21 @@ registrarPrueba("Primalidad: esPrimo(n)", () => {
   assert.strictEqual(RSAEngine.esPrimo(-7), false);
   assert.strictEqual(RSAEngine.esPrimo(15), false);
   assert.strictEqual(RSAEngine.esPrimo(323), false);
+
+  const primosPeq = RSAEngine.listarPrimosEnRango(17, 29);
+  assert.deepStrictEqual(Array.from(primosPeq), [17n, 19n, 23n, 29n]);
+
+  const genPeq = RSAEngine.generarPrimos("pequenos");
+  assert.strictEqual(RSAEngine.esPrimo(genPeq.pBig), true);
+  assert.strictEqual(RSAEngine.esPrimo(genPeq.qBig), true);
+  assert.notStrictEqual(genPeq.pBig, genPeq.qBig);
+  assert.ok(genPeq.nBig > 255n);
+
+  const genMed = RSAEngine.generarPrimos("medianos");
+  assert.strictEqual(RSAEngine.esPrimo(genMed.pBig), true);
+  assert.strictEqual(RSAEngine.esPrimo(genMed.qBig), true);
+  assert.ok(genMed.pBig >= 101n && genMed.pBig <= 499n);
+  assert.ok(genMed.qBig >= 101n && genMed.qBig <= 499n);
 });
 
 registrarPrueba("Euclides: euclidesMCD(a, b) y pasos", () => {
@@ -118,6 +183,17 @@ registrarPrueba("Euclides Extendido: euclidesExtendido(e, phi) y pasos", () => {
 
   const sinInverso = RSAEngine.euclidesExtendido(6, 288);
   assert.strictEqual(sinInverso.inversoExiste, false);
+  assert.strictEqual(sinInverso.dBig, null);
+});
+
+registrarPrueba("Sugerencia de exponente: sugerirExponenteE(phi, eActual)", () => {
+  const sug1 = RSAEngine.sugerirExponenteE(288);
+  assert.strictEqual(sug1.sugeridoBig, 5n);
+  assert.ok(sug1.candidatos.includes(5));
+
+  const sug2 = RSAEngine.sugerirExponenteE(288, 5n);
+  assert.notStrictEqual(sug2.sugeridoBig, 5n);
+  assert.strictEqual(RSAEngine.euclidesMCD(sug2.sugeridoBig, 288n).esCoprimo, true);
 });
 
 registrarPrueba("Exponenciación Modular: potenciaModular(base, exp, mod) y pasos", () => {
@@ -131,48 +207,128 @@ registrarPrueba("Exponenciación Modular: potenciaModular(base, exp, mod) y paso
   assert.strictEqual(dec.resultadoBig, 72n);
 });
 
-registrarPrueba("Contratos de error en generarClaves", () => {
-  const noPrimo = RSAEngine.generarClaves(15, 19, 5);
+// 4. Pruebas de parseo y validaciones en RSAValidaciones
+registrarPrueba("Parseos: esEnteroTexto, aBigInt y parsearBloquesCifrados", () => {
+  assert.strictEqual(RSAValidaciones.esEnteroTexto(" 17 "), true);
+  assert.strictEqual(RSAValidaciones.esEnteroTexto("-5"), true);
+  assert.strictEqual(RSAValidaciones.esEnteroTexto("12.3"), false);
+  assert.strictEqual(RSAValidaciones.esEnteroTexto("abc"), false);
+
+  assert.strictEqual(RSAValidaciones.aBigInt(" 19 ", "q"), 19n);
+  assert.strictEqual(RSAValidaciones.aBigInt(17, "p"), 17n);
+  assert.throws(() => RSAValidaciones.aBigInt("abc", "p"), /no es un entero válido/);
+
+  const parseOk = RSAValidaciones.parsearBloquesCifrados("[21, 129; 247 12]");
+  assert.strictEqual(parseOk.valido, true);
+  assert.deepStrictEqual(Array.from(parseOk.bloquesBig), [21n, 129n, 247n, 12n]);
+
+  const parseVacio = RSAValidaciones.parsearBloquesCifrados("   ");
+  assert.strictEqual(parseVacio.valido, false);
+  assert.strictEqual(parseVacio.error, "Ingrese al menos un bloque numérico cifrado para poder descifrar.");
+
+  const parseTokenMalo = RSAValidaciones.parsearBloquesCifrados("21, xyz, 12");
+  assert.strictEqual(parseTokenMalo.valido, false);
+  assert.ok(parseTokenMalo.error.includes("no es un bloque entero válido"));
+});
+
+registrarPrueba("Contratos de error exactos en validarYGenerarClaves", () => {
+  const noEntero = RSAValidaciones.validarYGenerarClaves("abc", "19", "5");
+  assert.strictEqual(noEntero.valido, false);
+  assert.ok(noEntero.error.includes("El parámetro p debe ser un número entero válido."));
+
+  const noPrimo = RSAValidaciones.validarYGenerarClaves("15", "19", "5");
   assert.strictEqual(noPrimo.valido, false);
-  assert.ok(noPrimo.error.includes("no es un número primo"));
+  assert.ok(noPrimo.error.includes("El valor p = 15 no es un número primo."));
 
-  const iguales = RSAEngine.generarClaves(17, 17, 5);
+  const iguales = RSAValidaciones.validarYGenerarClaves("17", "17", "5");
   assert.strictEqual(iguales.valido, false);
-  assert.ok(iguales.error.includes("deben ser distintos"));
+  assert.ok(iguales.error.includes("Los primos p y q deben ser distintos (p ≠ q)."));
 
-  const nPequeno = RSAEngine.generarClaves(11, 13, 5);
+  const nPequeno = RSAValidaciones.validarYGenerarClaves("11", "13", "5");
   assert.strictEqual(nPequeno.valido, false);
-  assert.ok(nPequeno.error.includes("menor o igual a 255"));
+  assert.ok(nPequeno.error.includes("es menor o igual a 255"));
 
-  const eFueraRango = RSAEngine.generarClaves(17, 19, 1);
+  const eInvalido = RSAValidaciones.validarYGenerarClaves("17", "19", "xyz");
+  assert.strictEqual(eInvalido.valido, false);
+  assert.ok(eInvalido.error.includes("El exponente público e debe ser un número entero válido."));
+  assert.ok(eInvalido.sugerenciasE.length > 0);
+
+  const eFueraRango = RSAValidaciones.validarYGenerarClaves("17", "19", "1");
   assert.strictEqual(eFueraRango.valido, false);
   assert.ok(eFueraRango.error.includes("1 < e < φ(n)"));
 
-  const eNoCoprimo = RSAEngine.generarClaves(17, 19, 6);
+  const eNoCoprimo = RSAValidaciones.validarYGenerarClaves("17", "19", "6");
   assert.strictEqual(eNoCoprimo.valido, false);
-  assert.ok(eNoCoprimo.error.includes("no es coprimo"));
+  assert.ok(eNoCoprimo.error.includes("no es coprimo con φ(n)"));
 });
 
-registrarPrueba("Contratos de error en cifrarMensaje y descifrarMensaje", () => {
-  const msgVacio = RSAEngine.cifrarMensaje("", 5, 323);
+registrarPrueba("Contratos de error exactos en validarYCifrarMensaje y validarYDescifrarMensaje", () => {
+  const msgVacio = RSAValidaciones.validarYCifrarMensaje("", 5, 323);
   assert.strictEqual(msgVacio.valido, false);
   assert.strictEqual(msgVacio.error, "El mensaje a cifrar no puede estar vacío.");
 
-  const modPequenoCif = RSAEngine.cifrarMensaje("HOLA", 5, 255);
+  const modPequenoCif = RSAValidaciones.validarYCifrarMensaje("HOLA", 5, 255);
   assert.strictEqual(modPequenoCif.valido, false);
   assert.ok(modPequenoCif.error.includes("estrictamente mayor que 255"));
 
-  const fueraAscii = RSAEngine.cifrarMensaje("A€", 5, 323);
+  const fueraAscii = RSAValidaciones.validarYCifrarMensaje("A€", 5, 323);
   assert.strictEqual(fueraAscii.valido, false);
   assert.ok(fueraAscii.error.includes("Carácter fuera de dominio detectado"));
 
-  const descTexto = RSAEngine.descifrarMensaje("21, 129, 247, 12", 173, 323);
-  assert.strictEqual(descTexto.valido, true);
-  assert.strictEqual(descTexto.mensajeDescifrado, "HOLA");
+  const mMayorN = RSAValidaciones.validarYCifrarMensaje("ÿ", 5, 255);
+  assert.strictEqual(mMayorN.valido, false);
 
-  const bloqueFueraRango = RSAEngine.descifrarMensaje([21, 323], 173, 323);
+  const modPequenoDec = RSAValidaciones.validarYDescifrarMensaje([21], 173, 255);
+  assert.strictEqual(modPequenoDec.valido, false);
+  assert.ok(modPequenoDec.error.includes("estrictamente mayor que 255"));
+
+  const dInvalido = RSAValidaciones.validarYDescifrarMensaje([21], 0, 323);
+  assert.strictEqual(dInvalido.valido, false);
+  assert.ok(dInvalido.error.includes("debe ser un entero positivo"));
+
+  const bloqueFueraRango = RSAValidaciones.validarYDescifrarMensaje([21, 323], 173, 323);
   assert.strictEqual(bloqueFueraRango.valido, false);
   assert.ok(bloqueFueraRango.error.includes("fuera del dominio válido 0 ≤ C < n"));
+
+  const mPrimaFueraAscii = RSAValidaciones.validarYDescifrarMensaje([260], 1, 323);
+  assert.strictEqual(mPrimaFueraAscii.valido, false);
+  assert.ok(mPrimaFueraAscii.error.includes("fuera del rango ASCII extendido (0–255)"));
+});
+
+registrarPrueba("Badges y helpers UI en RSAValidaciones: validarEstadoCamposClave", () => {
+  const vacio = RSAValidaciones.validarEstadoCamposClave("", "", "", null);
+  assert.strictEqual(vacio.p.texto, "Sin ingresar");
+  assert.strictEqual(vacio.p.estado, "neutral");
+  assert.strictEqual(vacio.q.texto, "Sin ingresar");
+  assert.strictEqual(vacio.e.texto, "Sin ingresar");
+
+  const ok = RSAValidaciones.validarYGenerarClaves("17", "19", "5");
+  const badgesOk = RSAValidaciones.validarEstadoCamposClave("17", "19", "5", ok);
+  assert.strictEqual(badgesOk.p.texto, "Primo válido");
+  assert.strictEqual(badgesOk.p.estado, "ok");
+  assert.strictEqual(badgesOk.q.texto, "Primo válido");
+  assert.strictEqual(badgesOk.q.estado, "ok");
+  assert.strictEqual(badgesOk.e.texto, "Coprimo válido");
+  assert.strictEqual(badgesOk.e.estado, "ok");
+
+  const iguales = RSAValidaciones.validarEstadoCamposClave("17", "17", "5", null);
+  assert.strictEqual(iguales.q.texto, "Igual a p");
+  assert.strictEqual(iguales.q.estado, "error");
+
+  const nPeq = RSAValidaciones.validarEstadoCamposClave("11", "13", "5", null);
+  assert.strictEqual(nPeq.q.texto, "n ≤ 255");
+  assert.strictEqual(nPeq.q.estado, "error");
+
+  const eNoCop = RSAValidaciones.validarYGenerarClaves("17", "19", "6");
+  const badgesENoCop = RSAValidaciones.validarEstadoCamposClave("17", "19", "6", eNoCop);
+  assert.strictEqual(badgesENoCop.e.texto, "No válido");
+  assert.strictEqual(badgesENoCop.e.estado, "error");
+
+  const sugCheck = RSAValidaciones.validarPrimosParaSugerencia("17", "19");
+  assert.strictEqual(sugCheck.valido, true);
+  assert.strictEqual(sugCheck.phiBig, 288n);
+  assert.strictEqual(RSAValidaciones.esExponenteValidoParaPhi("5", 288n), true);
+  assert.strictEqual(RSAValidaciones.esExponenteValidoParaPhi("6", 288n), false);
 });
 
 let pasadas = 0;
